@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Budget Buddy</title>
+<style>
+  :root {
+    --bg: #fbfbfe;
+    --card: #ffffff;
+    --border: #edecf5;
+    --text: #191a23;
+    --muted: #797e91;
+    --accent: #7c5cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px 20px; }
+  a { color: var(--accent); }
+  .back-link { display: inline-block; margin-bottom: 24px; font-size: 13.5px; text-decoration: none; color: var(--muted); }
+  .back-link:hover { color: var(--accent); }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .updated { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 17px; margin-top: 32px; margin-bottom: 8px; color: var(--accent); }
+  p, li { font-size: 14.5px; color: var(--text); }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 8px;
+  }
+  .placeholder {
+    background: #fef3de;
+    border: 1px solid #f5d99a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #8a6116;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">← Back to Budget Buddy</a>
+  <h1>Privacy Policy</h1>
+  <div class="updated">Last updated: 1 September 2026</div>
+
+  <div class="card">
+    <p>Budget Buddy ("the app", "we", "our") is a personal finance tracking tool. This policy explains what
+    information the app collects, how it's used, and what rights you have over it. It's written in plain
+    language rather than legal boilerplate, because that's more useful to actually read.</p>
+  </div>
+
+  <div class="placeholder">
+    <strong>Before publishing:</strong> replace the contact details in the "Contact Us" section below with
+    your real name/business and an email address you actually check. This is drafted for a single developer
+    running their own app for personal or small-scale use — if the app is ever offered to the public at
+    scale, it's worth having this reviewed by someone who does POPIA/data-protection compliance
+    professionally.
+  </div>
+
+  <h2>1. What Information We Collect</h2>
+  <ul>
+    <li><strong>Account information:</strong> your email address and password (the password itself is never
+    stored or visible to us — it's handled entirely by Supabase, our authentication provider, using
+    industry-standard hashing).</li>
+    <li><strong>Financial data you enter:</strong> income, expense, asset and liability entries, including
+    descriptions and amounts; loan details you provide (loan type, interest rate, principal, term, start date);
+    and the names and balances of any bank or savings accounts you add.</li>
+    <li><strong>Usage data:</strong> basic technical data such as login timestamps, generated automatically by
+    our hosting providers (Vercel and Supabase) for security and reliability — we don't run any separate
+    analytics or tracking on top of this.</li>
+  </ul>
+  <p>We do not collect your real bank login details, card numbers, or ID numbers, and the app never asks for
+  them — entries are just numbers and descriptions you type in yourself.</p>
+
+  <h2>2. How We Use Your Information</h2>
+  <ul>
+    <li>To provide the app's core functionality: storing your entries, calculating balances, and showing them
+    back to you when you log in.</li>
+    <li>To calculate loan figures (monthly payments, remaining balances, effective rates) from the numbers you
+    provide and the current prime interest rate.</li>
+    <li>To authenticate you securely and keep your data separate from any other user's.</li>
+  </ul>
+  <p>We do not use your data for advertising, do not sell or rent it to third parties, and do not use it to
+  generate personalised financial advice or recommendations — the app performs calculations based on the
+  figures you enter; it does not tell you what to do with your money. See the disclaimer in Section 6.</p>
+
+  <h2>3. Who Can See Your Data</h2>
+  <p>Your financial entries are private to your account. The app uses row-level security at the database
+  level, meaning the system itself enforces that your data is only ever readable by your own logged-in
+  session — not by other users of the app, and not by us browsing the database directly in the normal course
+  of running it.</p>
+  <p>Two service providers process data on our behalf, as is normal for any web app:</p>
+  <ul>
+    <li><strong>Supabase</strong> — hosts the database and handles authentication.</li>
+    <li><strong>Vercel</strong> — hosts and serves the app itself.</li>
+  </ul>
+  <p>Neither is given access to your data beyond what's needed to host and run the app.</p>
+
+  <h2>4. Data Retention &amp; Deletion</h2>
+  <p>Your data is kept for as long as your account exists. You can delete individual entries, accounts, or
+  loans at any time from within the app. To delete your account entirely, contact us using the details below
+  and we'll remove your account and all associated data.</p>
+
+  <h2>5. Your Rights</h2>
+  <p>Under South Africa's Protection of Personal Information Act (POPIA), you have the right to:</p>
+  <ul>
+    <li>Know what personal information of yours is held and how it's used (this policy).</li>
+    <li>Access the personal information we hold about you.</li>
+    <li>Request correction of inaccurate information.</li>
+    <li>Request deletion of your information, subject to any legal requirement to retain it.</li>
+    <li>Object to how your information is processed.</li>
+  </ul>
+  <p>To exercise any of these rights, contact us using the details in Section 8.</p>
+
+  <h2>6. Not Financial Advice</h2>
+  <p>Budget Buddy performs calculations (such as loan payments, interest projections, and balance tracking)
+  based entirely on the numbers you provide. It does not analyse your circumstances or recommend a course of
+  action, and nothing in the app should be treated as financial, investment, tax or legal advice. Always use
+  the actual figures quoted to you by a bank or lender, and consult a qualified professional for advice
+  specific to your situation.</p>
+
+  <h2>7. Security</h2>
+  <p>Data is encrypted in transit (HTTPS) between your device and our servers. Access to your data requires
+  your account password, and the database enforces per-user access at the row level as described in Section
+  3. No system is perfectly secure, but no unnecessary data is collected or stored beyond what the app needs
+  to function.</p>
+
+  <h2>8. Contact Us</h2>
+  <div class="placeholder">
+    [Your name / business name]<br>
+    [Your contact email]<br>
+    Johannesburg, South Africa
+  </div>
+
+  <h2>9. Changes to This Policy</h2>
+  <p>If this policy changes, the "Last updated" date at the top of this page will change accordingly. Continued
+  use of the app after an update means you accept the revised policy.</p>
+</div>
+</body>
+</html>
