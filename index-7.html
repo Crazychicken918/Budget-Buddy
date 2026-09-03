@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Buddy</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #fbfbfe;
+    --bg-elev: #ffffff;
+    --card: #ffffff;
+    --card-hover: #f5f4ff;
+    --border: #edecf5;
+    --text: #191a23;
+    --muted: #797e91;
+    --accent: #7c5cff;
+    --accent-dim: #ece7ff;
+    --income: #0fb981;
+    --income-bg: #e3faf1;
+    --expense: #f4406a;
+    --expense-bg: #fee9ee;
+    --asset: #06b6d4;
+    --asset-bg: #e0f8fc;
+    --liability: #f5a524;
+    --liability-bg: #fef3de;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(30,20,60,0.03), 0 6px 18px rgba(30,20,60,0.04);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  a { color: var(--accent); }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity .15s ease, transform .1s ease;
+  }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-secondary { background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--card-hover); }
+  .btn-danger { background: transparent; color: var(--expense); border: 1px solid rgba(224,64,63,0.3); padding: 6px 10px; font-size: 12px; }
+  .btn-icon { background: transparent; color: var(--muted); padding: 4px 8px; font-size: 13px; }
+  .btn-icon:hover { color: var(--text); }
+  input[type="email"], input[type="password"], input[type="text"], input[type="number"], input[type="date"] {
+    width: 100%;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 11px 13px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input:focus { outline: none; border-color: var(--accent); }
+  select {
+    width: 100%;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 11px 13px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
+  label { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .field { margin-bottom: 14px; }
+  .hidden { display: none !important; }
+
+  /* ---------- Auth screen ---------- */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .auth-box {
+    width: 100%;
+    max-width: 380px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 28px;
+  }
+  .auth-box h1 { font-size: 22px; margin: 0 0 4px 0; }
+  .auth-box .tagline { color: var(--muted); font-size: 13.5px; margin-bottom: 24px; }
+  .auth-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 22px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .auth-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+  }
+  .auth-tab.active { background: var(--accent); color: #fff; }
+  #auth-error { color: var(--expense); font-size: 13px; margin-top: 10px; display: none; }
+  #auth-msg { color: var(--income); font-size: 13px; margin-top: 10px; display: none; }
+
+  /* ---------- App shell ---------- */
+  #app-screen { display: none; }
+  header.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header.topbar h1 { font-size: 18px; margin: 0; }
+  header.topbar .user-email { color: var(--muted); font-size: 12.5px; margin-left: 10px; font-weight: 400; }
+  main { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px 20px; }
+
+  /* ---------- Main nav ---------- */
+  .main-nav {
+    display: flex;
+    gap: 4px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 10px 20px 0 20px;
+  }
+  .nav-link {
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid transparent;
+  }
+  .nav-link:hover { color: var(--text); background: var(--card-hover); }
+  .nav-link.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ---------- Summary cards ---------- */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    position: relative;
+  }
+  .summary-card.savings { border-top-color: var(--asset); }
+  .summary-card.diff { border-top-color: var(--income); }
+  .summary-card .label {
+    color: var(--muted);
+    font-size: 12.5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .summary-card .value { font-size: 24px; font-weight: 700; margin-top: 8px; }
+  .summary-card .sub { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+  .positive { color: var(--income); }
+  .negative { color: var(--expense); }
+
+  /* ---------- Bubbles ---------- */
+  .bubble-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .bubble:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(20,30,50,0.09); }
+  .bubble .icon {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px auto;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .bubble.income { border-bottom: 3px solid var(--income); }
+  .bubble.expense { border-bottom: 3px solid var(--expense); }
+  .bubble.asset { border-bottom: 3px solid var(--asset); }
+  .bubble.liability { border-bottom: 3px solid var(--liability); }
+  .bubble.income .icon { background: var(--income-bg); color: var(--income); }
+  .bubble.expense .icon { background: var(--expense-bg); color: var(--expense); }
+  .bubble.asset .icon { background: var(--asset-bg); color: var(--asset); }
+  .bubble.liability .icon { background: var(--liability-bg); color: var(--liability); }
+  .bubble .title { font-weight: 600; font-size: 14.5px; color: var(--text); }
+  .bubble .total { font-size: 16px; margin-top: 6px; font-weight: 700; }
+  .bubble.income .total { color: var(--income); }
+  .bubble.expense .total { color: var(--expense); }
+  .bubble.asset .total { color: var(--asset); }
+  .bubble.liability .total { color: var(--liability); }
+
+  /* ---------- Detail panel (category view) ---------- */
+  #detail-screen { display: none; }
+  .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .detail-header h2 { margin: 0; font-size: 20px; }
+  .detail-header .cat-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .cat-income { background: var(--income); }
+  .cat-expense { background: var(--expense); }
+  .cat-asset { background: var(--asset); }
+  .cat-liability { background: var(--liability); }
+
+  .entry-form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: flex-end; }
+  .entry-form .field { flex: 1; margin-bottom: 0; }
+  .entry-form .field.amount { max-width: 160px; }
+  .entry-list { display: flex; flex-direction: column; gap: 8px; }
+  .entry-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .entry-row .desc { font-size: 14px; }
+  .entry-row .amt { font-weight: 700; margin-right: 14px; }
+  .entry-row .right { display: flex; align-items: center; }
+  .empty-state { text-align: center; color: var(--muted); padding: 40px 0; font-size: 13.5px; }
+  .total-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(20,25,40,0.4);
+    align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 40px rgba(20,30,50,0.18);
+    padding: 24px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal h3 { margin: 0 0 4px 0; font-size: 16px; }
+  .modal .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+  /* ---------- Account manager ---------- */
+  .account-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .account-row .acc-name { flex: 1; font-size: 13.5px; font-weight: 600; }
+  .account-row .acc-balance { font-size: 13.5px; font-weight: 700; margin-right: 6px; }
+  .account-add-form { display: flex; gap: 8px; margin-top: 14px; }
+  .account-add-form input:first-child { flex: 2 1 0; min-width: 90px; }
+  .account-add-form input:last-child { flex: 1 1 0; min-width: 70px; }
+  .account-add-form button { flex: 0 0 auto; }
+  .account-total-bar {
+    display: flex; justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--accent-dim);
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13.5px;
+    margin-top: 14px;
+  }
+
+  /* ---------- Loan fields & prime rate badge ---------- */
+  .prime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--liability-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .prime-badge strong { color: var(--liability); }
+  .loan-fields {
+    display: none;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 4px;
+  }
+  .loan-fields.show { display: flex; }
+  .loan-fields .field { flex: 1; min-width: 140px; margin-bottom: 0; }
+  .loan-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--liability);
+    background: var(--liability-bg);
+    border-radius: 6px;
+    padding: 2px 7px;
+    margin-left: 8px;
+  }
+  .entry-row.loan { flex-direction: column; align-items: stretch; }
+  .entry-row.loan .loan-top { display: flex; justify-content: space-between; align-items: center; }
+  .entry-row.loan .loan-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 6px 14px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .entry-row.loan .loan-meta div { font-size: 11.5px; color: var(--muted); }
+  .entry-row.loan .loan-meta span { display: block; color: var(--text); font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+  .sim-toggle { margin-top: 10px; font-size: 12px; color: var(--accent); padding: 4px 0; }
+  .sim-toggle:hover { text-decoration: underline; }
+  .loan-sim { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .loan-sim.show { display: block; }
+  .loan-sim-row { display: flex; gap: 8px; }
+  .loan-sim-input { flex: 1; font-size: 13px; padding: 8px 10px; }
+  .loan-sim-row button { flex: 0 0 auto; font-size: 12.5px; padding: 8px 12px; }
+  .loan-sim-stats { display: flex; gap: 8px; margin-top: 10px; }
+  .loan-sim-stats > div { flex: 1; background: var(--bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .loan-sim-stats .stat-label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .loan-sim-stats strong { font-size: 13.5px; color: var(--text); }
+
+  /* ---------- Recurring payment fields ---------- */
+  .recurring-toggle { display: none; align-items: center; }
+  .recurring-toggle.show { display: flex; }
+  .recurring-toggle label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 0; color: var(--text); font-size: 13.5px; }
+  .recurring-toggle input[type="checkbox"] { width: auto; }
+  .recurring-fields { display: none; width: 100%; flex-wrap: wrap; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 4px; }
+  .recurring-fields.show { display: flex; }
+  .recurring-fields .field { flex: 1; min-width: 140px; margin-bottom: 0; }
+  .recurring-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 6px;
+    padding: 2px 7px;
+    margin-left: 8px;
+  }
+
+  /* ---------- Calendar ---------- */
+  .calendar-section {
+    margin-top: 34px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+  .calendar-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 4px; }
+  .calendar-header h3 { margin: 0; font-size: 16px; min-width: 160px; text-align: center; }
+  .calendar-header .btn-icon { font-size: 18px; padding: 4px 10px; }
+  .calendar-legend { display: flex; justify-content: center; gap: 20px; font-size: 12px; color: var(--muted); margin: 8px 0 16px 0; }
+  .calendar-legend span { display: flex; align-items: center; gap: 6px; }
+  .calendar-legend .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .calendar-legend .dot.in { background: var(--income); }
+  .calendar-legend .dot.out { background: var(--expense); }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-weekday { text-align: center; font-size: 11px; color: var(--muted); font-weight: 600; padding-bottom: 6px; }
+  .cal-day {
+    min-height: 64px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 4px;
+    background: var(--bg);
+  }
+  .cal-day.empty { border: none; background: transparent; }
+  .cal-day.today { border-color: var(--accent); background: var(--accent-dim); }
+  .cal-daynum { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+  .cal-pill {
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 5px;
+    padding: 1px 5px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cal-pill.cal-in { background: var(--income-bg); color: var(--income); }
+  .cal-pill.cal-out { background: var(--expense-bg); color: var(--expense); }
+
+  /* ---------- Forecast ---------- */
+  .forecast-intro { margin-bottom: 20px; }
+  .forecast-intro h2 { margin: 0 0 6px 0; font-size: 20px; }
+  .forecast-sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px 0; max-width: 600px; }
+  .forecast-controls { display: flex; align-items: center; gap: 10px; }
+  .forecast-controls label { margin-bottom: 0; }
+  .forecast-controls select { width: auto; min-width: 140px; }
+  .whatif-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .whatif-header { display: flex; align-items: center; justify-content: space-between; }
+  .whatif-header h3 { margin: 0; font-size: 15px; }
+  .whatif-sub { color: var(--muted); font-size: 12.5px; margin: 4px 0 14px 0; }
+  .whatif-row { margin-bottom: 12px; }
+  .whatif-row:last-child { margin-bottom: 0; }
+  .whatif-row label { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text); margin-bottom: 6px; }
+  .whatif-row label span { color: var(--accent); font-weight: 700; }
+  .whatif-row input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+  .networth-section { margin-top: 34px; }
+  .networth-section h3 { margin: 0 0 4px 0; font-size: 17px; }
+
+  .forecast-summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .forecast-summary-card .label { color: var(--muted); font-size: 12.5px; }
+  .forecast-summary-card .value { font-size: 30px; font-weight: 700; margin-top: 6px; }
+  .forecast-summary-card .sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .forecast-warning {
+    margin-top: 12px;
+    background: var(--expense-bg);
+    color: var(--expense);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .forecast-chart-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 16px 4px 16px;
+    margin-bottom: 20px;
+  }
+  .forecast-table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 6px 18px;
+    overflow-x: auto;
+  }
+  .forecast-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .forecast-table th {
+    text-align: right;
+    color: var(--muted);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .forecast-table th:first-child { text-align: left; }
+  .forecast-table td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .forecast-table td:first-child { text-align: left; font-weight: 600; }
+  .forecast-table tr:last-child td { border-bottom: none; }
+  .forecast-table td.balance-cell { font-weight: 700; }
+
+  /* ---------- Scenarios (NPV/IRR comparison) ---------- */
+  .scenarios-intro { margin-bottom: 22px; }
+  .scenarios-intro h2 { margin: 0 0 6px 0; font-size: 20px; }
+  .scenarios-sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px 0; max-width: 560px; }
+  .scenarios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .scenario-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 18px 16px 18px;
+    flex: 1 1 300px;
+    min-width: 280px;
+    max-width: 380px;
+  }
+  .scenario-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .scenario-name { font-weight: 700; font-size: 15px; }
+  .scenario-rate { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .cashflow-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .cashflow-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+  .cashflow-row .cf-label { color: var(--muted); }
+  .cashflow-row .cf-amount { font-weight: 700; margin-left: auto; margin-right: 8px; }
+  .cashflow-row .cf-remove { background: transparent; color: var(--muted); border: none; padding: 0 2px; font-size: 15px; font-weight: 700; line-height: 1; }
+  .cashflow-row .cf-remove:hover { color: var(--expense); }
+  .cashflow-add-form { display: flex; gap: 6px; margin-bottom: 14px; }
+  .cashflow-add-form input { font-size: 13px; padding: 8px 10px; }
+  .cashflow-add-form input.cf-period-input { flex: 0 0 70px; }
+  .cashflow-add-form input.cf-amount-input { flex: 1 1 0; min-width: 70px; }
+  .cashflow-add-form button { flex: 0 0 auto; padding: 8px 12px; font-size: 13px; }
+  .scenario-summary { display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .scenario-summary .stat { flex: 1; background: var(--bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .scenario-summary .stat .stat-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .scenario-summary .stat .stat-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .scenario-delete { background: transparent; color: var(--muted); border: 1px solid rgba(224,64,63,0.3); padding: 5px 9px; font-size: 11.5px; border-radius: 8px; }
+  .scenario-delete:hover { color: var(--expense); }
+
+  .app-footer {
+    text-align: center;
+    padding: 24px 20px 40px 20px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .app-footer a { color: var(--muted); text-decoration: underline; }
+  .app-footer a:hover { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .bubble-grid { grid-template-columns: repeat(2, 1fr); }
+    .entry-form .field.amount { max-width: 100%; }
+    .account-add-form { flex-wrap: wrap; }
+    .cal-day { min-height: 46px; }
+    .calendar-legend { flex-direction: column; align-items: center; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <h1>Budget Buddy</h1>
+    <div class="tagline">Track income, expenses, assets &amp; liabilities in one place.</div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Log In</div>
+      <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</div>
+    </div>
+
+    <form id="auth-form">
+      <div class="field">
+        <label for="auth-email">Email</label>
+        <input type="email" id="auth-email" required autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="auth-password">Password</label>
+        <input type="password" id="auth-password" required autocomplete="current-password" placeholder="At least 6 characters" minlength="6">
+      </div>
+      <button type="submit" class="btn-primary" id="auth-submit" style="width:100%;">Log In</button>
+      <div id="auth-error"></div>
+      <div id="auth-msg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= APP SCREEN ================= -->
+<div id="app-screen">
+  <header class="topbar">
+    <div><h1>Budget Buddy <span class="user-email" id="user-email-label"></span></h1></div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <select id="currency-select" onchange="onCurrencyChange()" style="width:auto;" title="All amounts are stored in South African Rand (ZAR) and converted for display using live exchange rates.">
+        <option value="ZAR">R — ZAR</option>
+        <option value="USD">$ — USD</option>
+        <option value="EUR">€ — EUR</option>
+        <option value="GBP">£ — GBP</option>
+      </select>
+      <button class="btn-secondary" onclick="exportDataCSV()" title="Download all your data as a CSV file">Export CSV</button>
+      <button class="btn-secondary" onclick="logout()">Log Out</button>
+    </div>
+  </header>
+
+  <nav class="main-nav">
+    <button class="nav-link active" id="nav-dashboard" onclick="showDashboard()">Dashboard</button>
+    <button class="nav-link" id="nav-forecast" onclick="showForecast()">Forecast</button>
+    <button class="nav-link" id="nav-scenarios" onclick="showScenarios()">Scenarios</button>
+  </nav>
+
+  <main>
+    <!-- ---- Dashboard ---- -->
+    <div id="dashboard-screen">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="label">
+            <span>Predicted Bank Balance</span>
+            <button class="btn-icon" onclick="openAccountsModal('bank')" title="Manage bank accounts">✎</button>
+          </div>
+          <div class="value" id="summary-bank">R0.00</div>
+          <div class="sub" id="summary-bank-sub">Across your bank accounts, + income − expenses</div>
+        </div>
+        <div class="summary-card savings">
+          <div class="label">
+            <span>Savings Accounts</span>
+            <button class="btn-icon" onclick="openAccountsModal('savings')" title="Manage savings accounts">✎</button>
+          </div>
+          <div class="value" id="summary-savings">R0.00</div>
+          <div class="sub" id="summary-savings-sub">Across all your savings accounts</div>
+        </div>
+        <div class="summary-card diff">
+          <div class="label"><span>Income vs Expenses</span></div>
+          <div class="value" id="summary-diff">R0.00</div>
+          <div class="sub" id="summary-diff-sub">Difference this period</div>
+        </div>
+      </div>
+
+      <div class="bubble-grid">
+        <div class="bubble income" onclick="openCategory('income')">
+          <div class="icon">↑</div>
+          <div class="title">Income</div>
+          <div class="total" id="bubble-total-income">R0.00</div>
+        </div>
+        <div class="bubble expense" onclick="openCategory('expense')">
+          <div class="icon">↓</div>
+          <div class="title">Expenses</div>
+          <div class="total" id="bubble-total-expense">R0.00</div>
+        </div>
+        <div class="bubble asset" onclick="openCategory('asset')">
+          <div class="icon">◆</div>
+          <div class="title">Assets</div>
+          <div class="total" id="bubble-total-asset">R0.00</div>
+        </div>
+        <div class="bubble liability" onclick="openCategory('liability')">
+          <div class="icon">!</div>
+          <div class="title">Liabilities</div>
+          <div class="total" id="bubble-total-liability">R0.00</div>
+        </div>
+      </div>
+
+      <div class="calendar-section">
+        <div class="calendar-header">
+          <button class="btn-icon" onclick="calendarPrevMonth()" title="Previous month">‹</button>
+          <h3 id="calendar-title">Month Year</h3>
+          <button class="btn-icon" onclick="calendarNextMonth()" title="Next month">›</button>
+        </div>
+        <div class="calendar-legend">
+          <span><span class="dot in"></span> Money coming in</span>
+          <span><span class="dot out"></span> Money going out</span>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+        <div class="empty-state hidden" id="calendar-empty">No recurring payments yet — mark an income or expense entry as "recurring" to see it on this calendar.</div>
+      </div>
+    </div>
+
+    <!-- ---- Category detail ---- -->
+    <div id="detail-screen">
+      <div class="detail-header">
+        <button class="btn-secondary" onclick="closeCategory()">← Back</button>
+        <span class="cat-dot" id="detail-dot"></span>
+        <h2 id="detail-title">Income</h2>
+      </div>
+
+      <div class="total-bar">
+        <span id="detail-total-label">Total Income</span>
+        <span id="detail-total-value">R0.00</span>
+      </div>
+
+      <div class="prime-badge hidden" id="prime-badge">
+        Current prime rate: <strong id="prime-badge-value">—</strong>
+        <span id="prime-badge-updated"></span>
+        <button class="btn-icon" onclick="openPrimeRateModal()" title="Update prime rate">✎</button>
+      </div>
+
+      <form class="entry-form" id="entry-form">
+        <div class="field">
+          <label for="entry-desc">Description</label>
+          <input type="text" id="entry-desc" required placeholder="e.g. Salary, Rent, Car, Credit card, Home loan">
+        </div>
+        <div class="field amount" id="entry-amount-field">
+          <label for="entry-amount">Amount (R)</label>
+          <input type="number" id="entry-amount" required min="0" step="0.01" placeholder="0.00">
+        </div>
+        <button type="submit" class="btn-primary">Add</button>
+
+        <!-- Shown for Income / Expenses only -->
+        <div class="recurring-toggle" id="recurring-toggle-wrap">
+          <label for="entry-recurring">
+            <input type="checkbox" id="entry-recurring" onchange="onRecurringToggleChange()">
+            Recurring payment
+          </label>
+        </div>
+        <div class="recurring-fields" id="recurring-fields">
+          <div class="field">
+            <label for="recurring-frequency">Repeats</label>
+            <select id="recurring-frequency">
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Every 2 weeks</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="annual">Annually</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="recurring-next-date" id="recurring-date-label">Next due date</label>
+            <input type="date" id="recurring-next-date">
+          </div>
+        </div>
+
+        <!-- Shown automatically for Liabilities when the description mentions "loan" -->
+        <div class="loan-fields" id="loan-fields">
+          <div class="field">
+            <label for="loan-type">Loan Type</label>
+            <select id="loan-type">
+              <option value="mortgage">Mortgage / Home Loan</option>
+              <option value="car">Vehicle / Car Loan</option>
+              <option value="personal">Personal Loan</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="loan-rate-type">Interest Rate Type</label>
+            <select id="loan-rate-type" onchange="onLoanRateTypeChange()">
+              <option value="prime_plus">Prime + Margin (variable)</option>
+              <option value="fixed">Fixed Rate</option>
+            </select>
+          </div>
+          <div class="field" id="loan-margin-field">
+            <label for="loan-margin">Margin Above Prime (%)</label>
+            <input type="number" id="loan-margin" step="0.01" placeholder="e.g. 0.5">
+          </div>
+          <div class="field hidden" id="loan-fixed-rate-field">
+            <label for="loan-fixed-rate">Fixed Annual Rate (%)</label>
+            <input type="number" id="loan-fixed-rate" step="0.01" placeholder="e.g. 11.5">
+          </div>
+          <div class="field">
+            <label for="loan-principal">Original Loan Amount (R)</label>
+            <input type="number" id="loan-principal" step="0.01" placeholder="e.g. 350000">
+          </div>
+          <div class="field">
+            <label for="loan-term">Term (months)</label>
+            <input type="number" id="loan-term" step="1" placeholder="e.g. 240">
+          </div>
+          <div class="field">
+            <label for="loan-start-date">Start Date</label>
+            <input type="date" id="loan-start-date">
+          </div>
+        </div>
+      </form>
+
+      <div class="entry-list" id="entry-list"></div>
+      <div class="empty-state hidden" id="entry-empty">No entries yet — add your first one above.</div>
+    </div>
+
+    <!-- ---- Forecast (cash flow projection) ---- -->
+    <div id="forecast-screen" style="display:none;">
+      <div class="forecast-intro">
+        <h2>Cash Flow Forecast</h2>
+        <p class="forecast-sub">Projects your predicted bank balance forward using your recurring income,
+        recurring expenses, and any loan repayments still in term. One-off entries aren't repeated — only
+        entries marked "Recurring payment" and active loans are projected into future months.</p>
+        <div class="forecast-controls">
+          <label for="forecast-horizon">Forecast horizon</label>
+          <select id="forecast-horizon" onchange="renderForecast()">
+            <option value="3">3 months</option>
+            <option value="6" selected>6 months</option>
+            <option value="12">12 months</option>
+            <option value="24">24 months</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="whatif-card">
+        <div class="whatif-header">
+          <h3>What-if</h3>
+          <button class="btn-icon" onclick="resetWhatIf()" title="Reset to actual figures">Reset</button>
+        </div>
+        <p class="whatif-sub">Temporarily nudge your recurring totals to see the effect below — nothing here is saved.</p>
+        <div class="whatif-row">
+          <label for="whatif-income">Recurring income <span id="whatif-income-value">+0%</span></label>
+          <input type="range" id="whatif-income" min="-50" max="50" value="0" step="5" oninput="onWhatIfChange()">
+        </div>
+        <div class="whatif-row">
+          <label for="whatif-expense">Recurring expenses <span id="whatif-expense-value">+0%</span></label>
+          <input type="range" id="whatif-expense" min="-50" max="50" value="0" step="5" oninput="onWhatIfChange()">
+        </div>
+      </div>
+
+      <div class="forecast-summary-card" id="forecast-summary-card">
+        <div class="label">Projected balance in <span id="forecast-summary-months">6 months</span></div>
+        <div class="value" id="forecast-summary-balance">R0.00</div>
+        <div class="sub" id="forecast-summary-change">—</div>
+        <div class="forecast-warning hidden" id="forecast-warning"></div>
+      </div>
+
+      <div class="forecast-chart-wrap" id="forecast-chart-wrap"></div>
+
+      <div class="forecast-table-wrap">
+        <table class="forecast-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Income</th>
+              <th>Expenses</th>
+              <th>Loan Repayments</th>
+              <th>Net</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody id="forecast-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="networth-section">
+        <h3>Net Worth Projection</h3>
+        <p class="forecast-sub">Bank + savings + other assets, minus other liabilities and declining loan balances, projected over the same horizon.</p>
+        <div class="forecast-summary-card">
+          <div class="label">Projected net worth in <span id="networth-summary-months">6 months</span></div>
+          <div class="value" id="networth-summary-value">R0.00</div>
+          <div class="sub" id="networth-summary-change">—</div>
+        </div>
+        <div class="forecast-chart-wrap" id="networth-chart-wrap"></div>
+      </div>
+
+      <div class="empty-state hidden" id="forecast-empty">
+        No recurring income or expenses yet — mark an entry as "Recurring payment" in Income or Expenses
+        to see a forecast here.
+      </div>
+    </div>
+
+    <!-- ---- Scenarios (NPV/IRR comparison) ---- -->
+    <div id="scenarios-screen" style="display:none;">
+      <div class="scenarios-intro">
+        <h2>Scenario Comparison</h2>
+        <p class="scenarios-sub">Compare cash flow scenarios side by side using NPV and IRR — useful for
+        comparing loan offers, investments, or any decision with cash flows over time. Period 0 is usually
+        your initial outlay (enter it as a negative amount); later periods are the cash flows that follow.</p>
+        <button class="btn-primary" onclick="openNewScenarioModal()">+ New Scenario</button>
+      </div>
+      <div class="scenarios-grid" id="scenarios-grid"></div>
+      <div class="empty-state hidden" id="scenarios-empty">No scenarios yet — add one above to start comparing.</div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+    <span>·</span>
+    <span>Budget Buddy</span>
+  </footer>
+</div>
+
+<!-- ================= Prime rate edit modal ================= -->
+<div class="modal-backdrop" id="prime-modal-backdrop">
+  <div class="modal">
+    <h3>Update Prime Rate</h3>
+    <div class="modal-sub">This updates the rate every prime-linked loan uses across the whole app.</div>
+    <div class="field">
+      <label for="prime-modal-input">Current SA Prime Rate (%)</label>
+      <input type="number" id="prime-modal-input" step="0.01" placeholder="e.g. 10.50">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closePrimeRateModal()">Cancel</button>
+      <button class="btn-primary" onclick="savePrimeRateModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Accounts manager modal ================= -->
+<div class="modal-backdrop" id="accounts-modal-backdrop">
+  <div class="modal">
+    <h3 id="accounts-modal-title">Bank Accounts</h3>
+    <div class="modal-sub" id="accounts-modal-sub">Add every bank account you want counted toward your predicted balance.</div>
+
+    <div id="accounts-list"></div>
+
+    <form class="account-add-form" id="account-add-form">
+      <input type="text" id="account-add-name" placeholder="Account name, e.g. FNB Cheque" required>
+      <input type="number" id="account-add-balance" placeholder="Balance" step="0.01" required>
+      <button type="submit" class="btn-primary">Add</button>
+    </form>
+
+    <div class="account-total-bar">
+      <span>Total</span>
+      <span id="accounts-modal-total">R0.00</span>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeAccountsModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= New scenario modal ================= -->
+<div class="modal-backdrop" id="scenario-modal-backdrop">
+  <div class="modal">
+    <h3>New Scenario</h3>
+    <div class="modal-sub">Give it a name and the discount rate to use when calculating its NPV.</div>
+    <div class="field">
+      <label for="scenario-name-input">Scenario name</label>
+      <input type="text" id="scenario-name-input" placeholder="e.g. Bank A Loan Offer">
+    </div>
+    <div class="field">
+      <label for="scenario-rate-input">Discount Rate (%)</label>
+      <input type="number" id="scenario-rate-input" step="0.01" placeholder="e.g. 11.5">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeNewScenarioModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveNewScenario()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — fill these in from your Supabase project settings
+// (Settings → API → Project URL / anon public key)
+// ============================================================
+const SUPABASE_URL = "https://pilgamuburdkpdfsuirk.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_O4zQwUhM5sPEDL8JE3B2QA_udfCl0uZ";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentCategory = null;
+let entriesCache = { income: [], expense: [], asset: [], liability: [] };
+let accountsCache = { bank: [], savings: [] };
+let primeRate = null;           // annual fraction, e.g. 0.105, loaded from bb_prime_rate
+let primeRateUpdatedAt = null;
+let accountsModalType = null;   // 'bank' | 'savings'
+let calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let scenariosCache = [];        // [{ id, name, discount_rate, cashflows: [{id, period, amount}] }]
+let scenariosLoaded = false;
+
+// ---------------- Currency display ----------------
+// Everything is stored in South African Rand (ZAR) — this only converts
+// what's shown on screen. Pick a display currency and it's remembered on
+// this device (localStorage), then every money() call converts using a
+// live exchange rate fetched from api.frankfurter.app (free, no key, ECB
+// reference rates). If the rate fetch fails and there's no cached rate,
+// display falls back to ZAR so numbers are never silently wrong.
+const CURRENCY_SYMBOLS = { ZAR: "R", USD: "$", EUR: "€", GBP: "£" };
+let displayCurrency = "ZAR";
+try { displayCurrency = localStorage.getItem("bb_currency") || "ZAR"; } catch (e) {}
+let exchangeRates = { ZAR: 1 };
+let ratesLoaded = false;
+
+const LOAN_TYPE_LABELS = { mortgage: "Mortgage", car: "Car Loan", personal: "Personal Loan" };
+
+const CATEGORY_META = {
+  income:    { label: "Income",     totalLabel: "Total Income",     dot: "cat-income" },
+  expense:   { label: "Expenses",   totalLabel: "Total Expenses",   dot: "cat-expense" },
+  asset:     { label: "Assets",     totalLabel: "Total Assets",     dot: "cat-asset" },
+  liability: { label: "Liabilities",totalLabel: "Total Liabilities",dot: "cat-liability" }
+};
+
+// n is always a ZAR amount (that's what's stored) — converts to the
+// selected display currency using the last-loaded exchange rate.
+function money(n) {
+  const raw = Number(n) || 0;
+  const rate = exchangeRates[displayCurrency] || 1;
+  const v = raw * rate;
+  const sign = v < 0 ? "-" : "";
+  const symbol = CURRENCY_SYMBOLS[displayCurrency] || "R";
+  return sign + symbol + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function loadExchangeRates() {
+  try {
+    const res = await fetch("https://api.frankfurter.app/latest?from=ZAR&to=USD,EUR,GBP");
+    if (!res.ok) throw new Error("bad response");
+    const data = await res.json();
+    exchangeRates = { ZAR: 1, ...data.rates };
+    ratesLoaded = true;
+    try { localStorage.setItem("bb_rates_cache", JSON.stringify({ rates: exchangeRates, date: data.date })); } catch (e) {}
+  } catch (err) {
+    let usedCache = false;
+    try {
+      const cached = JSON.parse(localStorage.getItem("bb_rates_cache") || "null");
+      if (cached && cached.rates) { exchangeRates = cached.rates; ratesLoaded = true; usedCache = true; }
+    } catch (e) {}
+    if (!usedCache && displayCurrency !== "ZAR") {
+      // No live rate and nothing cached — fall back to ZAR rather than show wrong numbers under a foreign symbol.
+      displayCurrency = "ZAR";
+      try { localStorage.setItem("bb_currency", "ZAR"); } catch (e) {}
+    }
+  }
+  const sel = document.getElementById("currency-select");
+  if (sel) sel.value = displayCurrency;
+}
+
+function onCurrencyChange() {
+  displayCurrency = document.getElementById("currency-select").value;
+  try { localStorage.setItem("bb_currency", displayCurrency); } catch (e) {}
+  refreshCurrencyViews();
+}
+
+// Re-renders whichever screens are currently visible so every money()
+// figure updates immediately after switching currency.
+function refreshCurrencyViews() {
+  renderDashboard();
+  if (currentCategory) renderEntryList();
+  if (document.getElementById("forecast-screen").style.display !== "none") renderForecast();
+  if (document.getElementById("scenarios-screen").style.display !== "none") renderScenarios();
+}
+
+function pct(n) {
+  const v = Number(n) || 0;
+  return (v * 100).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---------------- CSV export ----------------
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function exportDataCSV() {
+  const lines = [];
+
+  lines.push("Budget Buddy data export — " + new Date().toLocaleString("en-ZA"));
+  lines.push("All amounts below are in South African Rand (ZAR), regardless of the display currency selected in the app.");
+  lines.push("");
+
+  lines.push("ENTRIES");
+  lines.push([
+    "Category", "Description", "Amount", "Recurring", "Frequency", "Next/Due Date",
+    "Is Loan", "Loan Type", "Rate Type", "Fixed Rate %", "Prime Margin %",
+    "Principal", "Term (months)", "Start Date"
+  ].map(csvCell).join(","));
+
+  for (const cat of ["income", "expense", "asset", "liability"]) {
+    for (const e of entriesCache[cat]) {
+      lines.push([
+        cat,
+        e.description,
+        e.amount,
+        e.is_recurring ? "Yes" : "No",
+        e.is_recurring ? (RECURRENCE_LABELS[e.recurrence_frequency] || "") : "",
+        e.is_recurring ? e.recurrence_next_date : "",
+        e.is_loan ? "Yes" : "No",
+        e.is_loan ? (LOAN_TYPE_LABELS[e.loan_type] || "") : "",
+        e.is_loan ? e.rate_type : "",
+        e.is_loan && e.rate_type === "fixed" ? (Number(e.fixed_rate) * 100).toFixed(2) : "",
+        e.is_loan && e.rate_type === "prime_plus" ? (Number(e.prime_margin) * 100).toFixed(2) : "",
+        e.is_loan ? e.principal : "",
+        e.is_loan ? e.term_months : "",
+        e.is_loan ? e.start_date : ""
+      ].map(csvCell).join(","));
+    }
+  }
+
+  lines.push("");
+  lines.push("ACCOUNTS");
+  lines.push(["Account Type", "Name", "Balance"].map(csvCell).join(","));
+  for (const type of ["bank", "savings"]) {
+    for (const a of accountsCache[type]) {
+      lines.push([type, a.name, a.starting_balance].map(csvCell).join(","));
+    }
+  }
+
+  const csvContent = lines.join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "budget-buddy-export-" + new Date().toISOString().slice(0, 10) + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---------------- Loan math ----------------
+function pmtCalc(monthlyRate, n, pv) {
+  if (!n || n <= 0) return 0;
+  if (!monthlyRate) return pv / n;
+  return (pv * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n));
+}
+
+function remainingBalance(monthlyRate, n, p, pv) {
+  if (!n || n <= 0) return 0;
+  const paid = Math.max(0, Math.min(p, n));
+  if (paid >= n) return 0;
+  if (!monthlyRate) return pv * (1 - paid / n);
+  const payment = pmtCalc(monthlyRate, n, pv);
+  return payment * (1 - Math.pow(1 + monthlyRate, -(n - paid))) / monthlyRate;
+}
+
+function monthsElapsed(startDateStr) {
+  if (!startDateStr) return 0;
+  const start = new Date(startDateStr + "T00:00:00");
+  const now = new Date();
+  let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  if (now.getDate() < start.getDate()) months -= 1;
+  return Math.max(0, months);
+}
+
+function getLoanCurrentRate(entry) {
+  if (entry.rate_type === "fixed") return Number(entry.fixed_rate) || 0;
+  const base = primeRate != null ? primeRate : 0;
+  return base + (Number(entry.prime_margin) || 0);
+}
+
+function getLoanComputedBalance(entry) {
+  const rate = getLoanCurrentRate(entry);
+  const n = Number(entry.term_months) || 0;
+  const p = monthsElapsed(entry.start_date);
+  const pv = Number(entry.principal) || 0;
+  return remainingBalance(rate / 12, n, p, pv);
+}
+
+function getLoanMonthlyPayment(entry) {
+  const rate = getLoanCurrentRate(entry);
+  const n = Number(entry.term_months) || 0;
+  const pv = Number(entry.principal) || 0;
+  return pmtCalc(rate / 12, n, pv);
+}
+
+// Simulates paying off a loan balance with a fixed monthly payment, month
+// by month, until it reaches zero. Returns null if the payment doesn't even
+// cover the interest (balance would never shrink).
+function simulateLoanPayoff(startBalance, monthlyRate, monthlyPayment) {
+  let balance = startBalance;
+  let months = 0;
+  let interestPaid = 0;
+  while (balance > 0.01 && months < 1200) {
+    const interest = balance * monthlyRate;
+    const principalPortion = monthlyPayment - interest;
+    if (principalPortion <= 0) return null;
+    interestPaid += interest;
+    balance -= principalPortion;
+    months++;
+  }
+  return { months, interestPaid };
+}
+
+// Compares the loan's current payoff path against paying `extraAmount`
+// more per month, using the loan's current computed balance and rate.
+function simulateExtraPayment(entry, extraAmount) {
+  const balance = getLoanComputedBalance(entry);
+  const monthlyRate = getLoanCurrentRate(entry) / 12;
+  const basePayment = getLoanMonthlyPayment(entry);
+
+  const baseline = simulateLoanPayoff(balance, monthlyRate, basePayment);
+  const withExtra = simulateLoanPayoff(balance, monthlyRate, basePayment + extraAmount);
+  if (!baseline || !withExtra) return null;
+
+  return {
+    baselineMonths: baseline.months,
+    newMonths: withExtra.months,
+    monthsSaved: baseline.months - withExtra.months,
+    interestSaved: baseline.interestPaid - withExtra.interestPaid
+  };
+}
+
+function entryValue(entry) {
+  if (entry.category === "liability" && entry.is_loan) return getLoanComputedBalance(entry);
+  return Number(entry.amount) || 0;
+}
+
+const RECURRENCE_LABELS = { weekly: "Weekly", biweekly: "Every 2 weeks", monthly: "Monthly", annual: "Annually" };
+
+// ---------------- Recurring payment calendar ----------------
+// Given a recurring entry and a calendar month (year, 0-indexed month), returns
+// the Date objects in that month the payment is due (expense) / received (income),
+// projecting forward indefinitely from the entry's anchor date + frequency.
+function getOccurrencesInMonth(entry, year, month) {
+  if (!entry.is_recurring || !entry.recurrence_next_date) return [];
+  const freq = entry.recurrence_frequency;
+  const anchor = new Date(entry.recurrence_next_date + "T00:00:00");
+  const monthStart = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthEnd = new Date(year, month, daysInMonth);
+  const occurrences = [];
+
+  if (freq === "monthly") {
+    if (year < anchor.getFullYear() || (year === anchor.getFullYear() && month < anchor.getMonth())) return [];
+    const day = Math.min(anchor.getDate(), daysInMonth);
+    occurrences.push(new Date(year, month, day));
+  } else if (freq === "annual") {
+    if (month !== anchor.getMonth()) return [];
+    if (year < anchor.getFullYear()) return [];
+    occurrences.push(new Date(year, month, anchor.getDate()));
+  } else if (freq === "weekly" || freq === "biweekly") {
+    const stepMs = (freq === "weekly" ? 7 : 14) * 86400000;
+    if (monthEnd < anchor) return [];
+    let cursor = new Date(anchor);
+    if (cursor < monthStart) {
+      const diffMs = monthStart - cursor;
+      const steps = Math.ceil(diffMs / stepMs);
+      cursor = new Date(cursor.getTime() + steps * stepMs);
+    }
+    while (cursor <= monthEnd) {
+      occurrences.push(new Date(cursor));
+      cursor = new Date(cursor.getTime() + stepMs);
+    }
+  }
+  return occurrences;
+}
+
+function calendarPrevMonth() {
+  calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+  renderCalendar();
+}
+
+function calendarNextMonth() {
+  calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  document.getElementById("calendar-title").textContent =
+    calendarViewDate.toLocaleDateString("en-ZA", { month: "long", year: "numeric" });
+
+  const recurringEntries = [...entriesCache.income, ...entriesCache.expense].filter(e => e.is_recurring);
+
+  const eventsByDay = {};
+  for (const entry of recurringEntries) {
+    for (const d of getOccurrencesInMonth(entry, year, month)) {
+      const day = d.getDate();
+      if (!eventsByDay[day]) eventsByDay[day] = [];
+      eventsByDay[day].push({ desc: entry.description, amount: Number(entry.amount) || 0, category: entry.category });
+    }
+  }
+
+  const grid = document.getElementById("calendar-grid");
+  grid.innerHTML = "";
+  const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  for (const wd of weekdayNames) {
+    const h = document.createElement("div");
+    h.className = "cal-weekday";
+    h.textContent = wd;
+    grid.appendChild(h);
+  }
+
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    const blank = document.createElement("div");
+    blank.className = "cal-day empty";
+    grid.appendChild(blank);
+  }
+
+  const today = new Date();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cell = document.createElement("div");
+    cell.className = "cal-day";
+    if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === day) {
+      cell.classList.add("today");
+    }
+    const num = document.createElement("div");
+    num.className = "cal-daynum";
+    num.textContent = String(day);
+    cell.appendChild(num);
+
+    for (const ev of (eventsByDay[day] || [])) {
+      const pill = document.createElement("div");
+      pill.className = "cal-pill " + (ev.category === "income" ? "cal-in" : "cal-out");
+      pill.textContent = (ev.category === "income" ? "+" : "−") + money(ev.amount);
+      pill.title = ev.desc;
+      cell.appendChild(pill);
+    }
+    grid.appendChild(cell);
+  }
+
+  document.getElementById("calendar-empty").classList.toggle("hidden", recurringEntries.length > 0);
+}
+
+// ---------------- Forecast (cash flow projection) ----------------
+const FORECAST_COLORS = {
+  accent: "#7c5cff",
+  accentDim: "#ece7ff",
+  income: "#0fb981",
+  expense: "#f4406a",
+  border: "#edecf5",
+  muted: "#797e91",
+  text: "#191a23"
+};
+
+// What-if adjustment: temporary percentage nudges applied only to the
+// forecast projection, never saved to the database.
+let whatIfIncomePct = 0;
+let whatIfExpensePct = 0;
+
+function onWhatIfChange() {
+  whatIfIncomePct = parseInt(document.getElementById("whatif-income").value, 10) || 0;
+  whatIfExpensePct = parseInt(document.getElementById("whatif-expense").value, 10) || 0;
+  document.getElementById("whatif-income-value").textContent = (whatIfIncomePct >= 0 ? "+" : "") + whatIfIncomePct + "%";
+  document.getElementById("whatif-expense-value").textContent = (whatIfExpensePct >= 0 ? "+" : "") + whatIfExpensePct + "%";
+  renderForecast();
+}
+
+function resetWhatIf() {
+  whatIfIncomePct = 0;
+  whatIfExpensePct = 0;
+  document.getElementById("whatif-income").value = 0;
+  document.getElementById("whatif-expense").value = 0;
+  document.getElementById("whatif-income-value").textContent = "+0%";
+  document.getElementById("whatif-expense-value").textContent = "+0%";
+  renderForecast();
+}
+
+// Projects the predicted bank balance forward month by month using only
+// entries marked recurring (income/expense) plus active loan repayments —
+// reuses the same occurrence logic as the payments calendar. The what-if
+// sliders scale the recurring totals only within this projection.
+function computeForecast(months) {
+  const startBalance = accountsTotal("bank") + (categoryTotal("income") - categoryTotal("expense"));
+  const recurringIncome = entriesCache.income.filter(e => e.is_recurring);
+  const recurringExpense = entriesCache.expense.filter(e => e.is_recurring);
+  const loans = entriesCache.liability.filter(e => e.is_loan && e.start_date && e.term_months);
+  const incomeFactor = 1 + (whatIfIncomePct / 100);
+  const expenseFactor = 1 + (whatIfExpensePct / 100);
+
+  const today = new Date();
+  let balance = startBalance;
+  const rows = [];
+
+  for (let i = 1; i <= months; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth();
+
+    let incomeTotal = 0;
+    for (const e of recurringIncome) {
+      const occ = getOccurrencesInMonth(e, year, month);
+      incomeTotal += occ.length * (Number(e.amount) || 0) * incomeFactor;
+    }
+
+    let expenseTotal = 0;
+    for (const e of recurringExpense) {
+      const occ = getOccurrencesInMonth(e, year, month);
+      expenseTotal += occ.length * (Number(e.amount) || 0) * expenseFactor;
+    }
+
+    let loanTotal = 0;
+    for (const loan of loans) {
+      // Reuse the monthly-recurrence logic, anchored at the loan's start date,
+      // then only count it while still inside the loan's term.
+      const occ = getOccurrencesInMonth(
+        { is_recurring: true, recurrence_frequency: "monthly", recurrence_next_date: loan.start_date },
+        year, month
+      );
+      if (occ.length > 0) {
+        const start = new Date(loan.start_date + "T00:00:00");
+        const elapsed = (year - start.getFullYear()) * 12 + (month - start.getMonth());
+        if (elapsed >= 0 && elapsed < Number(loan.term_months)) {
+          loanTotal += getLoanMonthlyPayment(loan);
+        }
+      }
+    }
+
+    const net = incomeTotal - expenseTotal - loanTotal;
+    balance += net;
+    rows.push({ year, month, incomeTotal, expenseTotal, loanTotal, net, balance });
+  }
+
+  return { startBalance, rows };
+}
+
+// Renders a simple line/area chart into the given container. `points` is
+// [{label, value}]. Shared by the cash flow forecast and net worth charts.
+function renderLineChart(containerId, points) {
+  const wrap = document.getElementById(containerId);
+  const w = 640, h = 220, padL = 70, padR = 16, padT = 16, padB = 28;
+  const values = points.map(p => p.value);
+  const min = Math.min(0, ...values);
+  const max = Math.max(0, ...values);
+  const range = (max - min) || 1;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const xStep = points.length > 1 ? plotW / (points.length - 1) : 0;
+  const xFor = (i) => padL + i * xStep;
+  const yFor = (v) => padT + plotH - ((v - min) / range) * plotH;
+  const zeroY = yFor(0);
+
+  const linePoints = points.map((p, i) => `${xFor(i)},${yFor(p.value)}`).join(" ");
+  const areaPoints = `${xFor(0)},${zeroY} ` + points.map((p, i) => `${xFor(i)},${yFor(p.value)}`).join(" ") + ` ${xFor(points.length - 1)},${zeroY}`;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="220" preserveAspectRatio="xMidYMid meet">`;
+  svg += `<text x="${padL - 8}" y="${padT + 4}" text-anchor="end" font-size="10" fill="${FORECAST_COLORS.muted}">${money(max)}</text>`;
+  svg += `<text x="${padL - 8}" y="${padT + plotH}" text-anchor="end" font-size="10" fill="${FORECAST_COLORS.muted}">${money(min)}</text>`;
+  svg += `<line x1="${padL}" y1="${zeroY}" x2="${w - padR}" y2="${zeroY}" stroke="${FORECAST_COLORS.border}" stroke-width="1" />`;
+  svg += `<polygon points="${areaPoints}" fill="${FORECAST_COLORS.accentDim}" opacity="0.7" />`;
+  svg += `<polyline points="${linePoints}" fill="none" stroke="${FORECAST_COLORS.accent}" stroke-width="2.5" stroke-linejoin="round" />`;
+
+  points.forEach((p, i) => {
+    const cx = xFor(i), cy = yFor(p.value);
+    const color = p.value < 0 ? FORECAST_COLORS.expense : FORECAST_COLORS.accent;
+    svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="#ffffff" stroke-width="1.5" />`;
+    if (i === 0 || i === points.length - 1 || i % Math.ceil(points.length / 8 || 1) === 0) {
+      svg += `<text x="${cx}" y="${h - 8}" text-anchor="middle" font-size="10" fill="${FORECAST_COLORS.muted}">${escapeHtml(p.label)}</text>`;
+    }
+  });
+
+  svg += `</svg>`;
+  wrap.innerHTML = svg;
+}
+
+// Net worth = bank + savings + other assets − other (non-loan) liabilities
+// − remaining loan balances, projected forward the same number of months.
+// Reuses the cash-flow forecast's projected bank balance per month (which
+// already reflects the what-if sliders) and declines each loan's balance
+// using the same amortization math as the Liabilities tab.
+function computeNetWorth(months, cashRows, startBalance) {
+  const savingsTotal = accountsTotal("savings");
+  const otherAssetsTotal = categoryTotal("asset");
+  const nonLoanLiabilities = entriesCache.liability
+    .filter(e => !e.is_loan)
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const loans = entriesCache.liability.filter(e => e.is_loan);
+
+  const startLoanBalance = loans.reduce((sum, loan) => sum + getLoanComputedBalance(loan), 0);
+  const startNetWorth = startBalance + savingsTotal + otherAssetsTotal - nonLoanLiabilities - startLoanBalance;
+
+  const rows = cashRows.map((r, idx) => {
+    const monthsAhead = idx + 1;
+    let loanBalanceTotal = 0;
+    for (const loan of loans) {
+      const rate = getLoanCurrentRate(loan);
+      const n = Number(loan.term_months) || 0;
+      const pv = Number(loan.principal) || 0;
+      const p = monthsElapsed(loan.start_date) + monthsAhead;
+      loanBalanceTotal += remainingBalance(rate / 12, n, p, pv);
+    }
+    const netWorth = r.balance + savingsTotal + otherAssetsTotal - nonLoanLiabilities - loanBalanceTotal;
+    return { year: r.year, month: r.month, netWorth };
+  });
+
+  return { startNetWorth, rows };
+}
+
+function renderForecast() {
+  const months = parseInt(document.getElementById("forecast-horizon").value, 10) || 6;
+  const { startBalance, rows } = computeForecast(months);
+
+  const hasRecurring = entriesCache.income.some(e => e.is_recurring) ||
+                        entriesCache.expense.some(e => e.is_recurring) ||
+                        entriesCache.liability.some(e => e.is_loan);
+
+  document.getElementById("forecast-empty").classList.toggle("hidden", hasRecurring);
+
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const last = rows[rows.length - 1];
+  const endBalance = last ? last.balance : startBalance;
+  const change = endBalance - startBalance;
+
+  document.getElementById("forecast-summary-months").textContent = months + " month" + (months === 1 ? "" : "s");
+  const balEl = document.getElementById("forecast-summary-balance");
+  balEl.textContent = money(endBalance);
+  balEl.style.color = endBalance < 0 ? "var(--expense)" : "var(--text)";
+  document.getElementById("forecast-summary-change").textContent =
+    (change >= 0 ? "Up " : "Down ") + money(Math.abs(change)) + " from today's predicted balance (" + money(startBalance) + ")";
+
+  const negativeMonth = rows.find(r => r.balance < 0);
+  const warningEl = document.getElementById("forecast-warning");
+  if (negativeMonth) {
+    warningEl.textContent = "Heads up — your predicted balance dips below R0.00 around " +
+      monthNames[negativeMonth.month] + " " + negativeMonth.year + " if nothing changes.";
+    warningEl.classList.remove("hidden");
+  } else {
+    warningEl.classList.add("hidden");
+  }
+
+  const points = [{ label: "Now", value: startBalance }].concat(
+    rows.map(r => ({ label: monthNames[r.month] + " '" + String(r.year).slice(2), value: r.balance }))
+  );
+  renderLineChart("forecast-chart-wrap", points);
+
+  const tbody = document.getElementById("forecast-tbody");
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${monthNames[r.month]} ${r.year}</td>
+      <td class="positive">${r.incomeTotal > 0 ? "+" + money(r.incomeTotal) : money(0)}</td>
+      <td class="negative">${r.expenseTotal > 0 ? "-" + money(r.expenseTotal) : money(0)}</td>
+      <td class="negative">${r.loanTotal > 0 ? "-" + money(r.loanTotal) : money(0)}</td>
+      <td class="${r.net >= 0 ? 'positive' : 'negative'}">${r.net >= 0 ? "+" : "-"}${money(Math.abs(r.net))}</td>
+      <td class="balance-cell" style="color:${r.balance < 0 ? 'var(--expense)' : 'var(--text)'}">${money(r.balance)}</td>
+    </tr>
+  `).join("");
+
+  // ---- Net worth projection ----
+  const { startNetWorth, rows: nwRows } = computeNetWorth(months, rows, startBalance);
+  const lastNw = nwRows[nwRows.length - 1];
+  const endNetWorth = lastNw ? lastNw.netWorth : startNetWorth;
+  const nwChange = endNetWorth - startNetWorth;
+
+  document.getElementById("networth-summary-months").textContent = months + " month" + (months === 1 ? "" : "s");
+  const nwValEl = document.getElementById("networth-summary-value");
+  nwValEl.textContent = money(endNetWorth);
+  nwValEl.style.color = endNetWorth < 0 ? "var(--expense)" : "var(--text)";
+  document.getElementById("networth-summary-change").textContent =
+    (nwChange >= 0 ? "Up " : "Down ") + money(Math.abs(nwChange)) + " from today's net worth (" + money(startNetWorth) + ")";
+
+  const nwPoints = [{ label: "Now", value: startNetWorth }].concat(
+    nwRows.map(r => ({ label: monthNames[r.month] + " '" + String(r.year).slice(2), value: r.netWorth }))
+  );
+  renderLineChart("networth-chart-wrap", nwPoints);
+}
+
+// ---------------- Scenario comparison (NPV / IRR) ----------------
+// cashflows: array of {period, amount}, period 0 = initial outlay (usually negative).
+function computeNPV(rate, cashflows) {
+  return cashflows.reduce((sum, cf) => sum + cf.amount / Math.pow(1 + rate, cf.period), 0);
+}
+
+// Bisection method — robust for the irregular cash flows this tool allows
+// (works even when Newton's method would fail to converge or diverge).
+function computeIRR(cashflows) {
+  if (cashflows.length < 2) return null;
+  let low = -0.9999, high = 10; // -99.99% to 1000%
+  let npvLow = computeNPV(low, cashflows);
+  let npvHigh = computeNPV(high, cashflows);
+  if (npvLow === 0) return low;
+  if (npvHigh === 0) return high;
+  if ((npvLow > 0) === (npvHigh > 0)) return null; // no sign change in range — no IRR found
+
+  for (let i = 0; i < 100; i++) {
+    const mid = (low + high) / 2;
+    const npvMid = computeNPV(mid, cashflows);
+    if (Math.abs(npvMid) < 0.01) return mid;
+    if ((npvMid > 0) === (npvLow > 0)) { low = mid; npvLow = npvMid; }
+    else { high = mid; }
+  }
+  return (low + high) / 2;
+}
+
+async function loadScenarios() {
+  const { data: scenarios, error: scErr } = await sb
+    .from("bb_scenarios")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+
+  if (scErr || !scenarios) { scenariosCache = []; scenariosLoaded = true; return; }
+
+  const ids = scenarios.map(s => s.id);
+  let cashflowsByScenario = {};
+  if (ids.length > 0) {
+    const { data: cashflows } = await sb
+      .from("bb_scenario_cashflows")
+      .select("*")
+      .in("scenario_id", ids)
+      .order("period", { ascending: true });
+    for (const cf of (cashflows || [])) {
+      if (!cashflowsByScenario[cf.scenario_id]) cashflowsByScenario[cf.scenario_id] = [];
+      cashflowsByScenario[cf.scenario_id].push(cf);
+    }
+  }
+
+  scenariosCache = scenarios.map(s => ({ ...s, cashflows: cashflowsByScenario[s.id] || [] }));
+  scenariosLoaded = true;
+}
+
+function renderScenarios() {
+  const grid = document.getElementById("scenarios-grid");
+  const empty = document.getElementById("scenarios-empty");
+  grid.innerHTML = "";
+
+  if (scenariosCache.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
+  for (const scenario of scenariosCache) {
+    const card = document.createElement("div");
+    card.className = "scenario-card";
+
+    const cashflows = scenario.cashflows;
+    const npv = cashflows.length > 0 ? computeNPV(Number(scenario.discount_rate) || 0, cashflows) : 0;
+    const irr = computeIRR(cashflows);
+
+    const cfRowsHtml = cashflows.map(cf => `
+      <div class="cashflow-row">
+        <span class="cf-label">${cf.period === 0 ? "Period 0 (Initial)" : "Period " + cf.period}</span>
+        <span class="cf-amount ${cf.amount < 0 ? 'negative' : 'positive'}">${money(cf.amount)}</span>
+        <button class="cf-remove" data-cf-id="${cf.id}" title="Remove">×</button>
+      </div>
+    `).join("") || `<div class="empty-state" style="padding:10px 0;font-size:12.5px;">No cash flows yet.</div>`;
+
+    card.innerHTML = `
+      <div class="scenario-card-header">
+        <div>
+          <div class="scenario-name">${escapeHtml(scenario.name)}</div>
+          <div class="scenario-rate">Discount rate: ${pct(scenario.discount_rate)}</div>
+        </div>
+        <button class="scenario-delete" data-scenario-id="${scenario.id}">Delete</button>
+      </div>
+      <div class="cashflow-list">${cfRowsHtml}</div>
+      <form class="cashflow-add-form" data-scenario-id="${scenario.id}">
+        <input type="number" class="cf-period-input" placeholder="Period" step="1" min="0" required>
+        <input type="number" class="cf-amount-input" placeholder="Amount (R)" step="0.01" required>
+        <button type="submit" class="btn-secondary">Add</button>
+      </form>
+      <div class="scenario-summary">
+        <div class="stat">
+          <div class="stat-label">NPV</div>
+          <div class="stat-value ${npv >= 0 ? 'positive' : 'negative'}">${money(npv)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">IRR</div>
+          <div class="stat-value">${irr === null ? "n/a" : pct(irr)}</div>
+        </div>
+      </div>
+    `;
+
+    card.querySelector(".scenario-delete").addEventListener("click", () => deleteScenario(scenario.id));
+    card.querySelectorAll(".cf-remove").forEach(btn => {
+      btn.addEventListener("click", () => deleteCashflow(scenario.id, btn.dataset.cfId));
+    });
+    card.querySelector(".cashflow-add-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const periodEl = card.querySelector(".cf-period-input");
+      const amountEl = card.querySelector(".cf-amount-input");
+      const period = parseInt(periodEl.value, 10);
+      const amount = parseFloat(amountEl.value);
+      if (isNaN(period) || period < 0 || isNaN(amount)) return;
+      await addCashflow(scenario.id, period, amount);
+    });
+
+    grid.appendChild(card);
+  }
+}
+
+function openNewScenarioModal() {
+  document.getElementById("scenario-name-input").value = "";
+  document.getElementById("scenario-rate-input").value = "";
+  document.getElementById("scenario-modal-backdrop").classList.add("show");
+}
+
+function closeNewScenarioModal() {
+  document.getElementById("scenario-modal-backdrop").classList.remove("show");
+}
+
+async function saveNewScenario() {
+  const name = document.getElementById("scenario-name-input").value.trim();
+  const ratePct = parseFloat(document.getElementById("scenario-rate-input").value);
+  if (!name || isNaN(ratePct) || ratePct < 0) return;
+
+  const { data, error } = await sb
+    .from("bb_scenarios")
+    .insert({ user_id: currentUser.id, name, discount_rate: ratePct / 100 })
+    .select()
+    .single();
+
+  if (!error && data) {
+    scenariosCache.push({ ...data, cashflows: [] });
+    closeNewScenarioModal();
+    renderScenarios();
+  } else if (error) {
+    alert("Couldn't create that scenario: " + error.message);
+  }
+}
+
+async function deleteScenario(id) {
+  const { error } = await sb.from("bb_scenarios").delete().eq("id", id);
+  if (!error) {
+    scenariosCache = scenariosCache.filter(s => s.id !== id);
+    renderScenarios();
+  } else {
+    alert("Couldn't delete that scenario: " + error.message);
+  }
+}
+
+async function addCashflow(scenarioId, period, amount) {
+  const { data, error } = await sb
+    .from("bb_scenario_cashflows")
+    .insert({ scenario_id: scenarioId, period, amount })
+    .select()
+    .single();
+
+  if (!error && data) {
+    const scenario = scenariosCache.find(s => s.id === scenarioId);
+    if (scenario) {
+      scenario.cashflows.push(data);
+      scenario.cashflows.sort((a, b) => a.period - b.period);
+    }
+    renderScenarios();
+  } else if (error) {
+    alert("Couldn't add that cash flow: " + error.message);
+  }
+}
+
+async function deleteCashflow(scenarioId, cashflowId) {
+  const { error } = await sb.from("bb_scenario_cashflows").delete().eq("id", cashflowId);
+  if (!error) {
+    const scenario = scenariosCache.find(s => s.id === scenarioId);
+    if (scenario) scenario.cashflows = scenario.cashflows.filter(cf => cf.id !== cashflowId);
+    renderScenarios();
+  } else {
+    alert("Couldn't remove that cash flow: " + error.message);
+  }
+}
+
+// ---------------- Auth ----------------
+let authMode = "login";
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById("tab-login").classList.toggle("active", mode === "login");
+  document.getElementById("tab-signup").classList.toggle("active", mode === "signup");
+  document.getElementById("auth-submit").textContent = mode === "login" ? "Log In" : "Sign Up";
+  document.getElementById("auth-error").style.display = "none";
+  document.getElementById("auth-msg").style.display = "none";
+}
+
+document.getElementById("auth-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("auth-email").value.trim();
+  const password = document.getElementById("auth-password").value;
+  const errEl = document.getElementById("auth-error");
+  const msgEl = document.getElementById("auth-msg");
+  errEl.style.display = "none";
+  msgEl.style.display = "none";
+
+  const submitBtn = document.getElementById("auth-submit");
+  submitBtn.disabled = true;
+
+  try {
+    if (authMode === "login") {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    } else {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) throw error;
+      if (data.user && !data.session) {
+        msgEl.textContent = "Account created — check your email to confirm, then log in.";
+        msgEl.style.display = "block";
+        switchAuthTab("login");
+      }
+    }
+  } catch (err) {
+    errEl.textContent = err.message || "Something went wrong.";
+    errEl.style.display = "block";
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+async function logout() {
+  await sb.auth.signOut();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (session && session.user) {
+    currentUser = session.user;
+    showApp();
+  } else {
+    currentUser = null;
+    showAuth();
+  }
+});
+
+function showAuth() {
+  document.getElementById("auth-screen").style.display = "flex";
+  document.getElementById("app-screen").style.display = "none";
+}
+
+async function showApp() {
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "block";
+  document.getElementById("user-email-label").textContent = currentUser.email;
+  document.getElementById("currency-select").value = displayCurrency;
+  await loadPrimeRate();
+  await loadAccounts();
+  await loadAllEntries();
+  await loadExchangeRates();
+  showDashboard();
+}
+
+// ---------------- Data loading ----------------
+async function loadPrimeRate() {
+  const { data, error } = await sb.from("bb_prime_rate").select("*").eq("id", 1).maybeSingle();
+  if (!error && data) {
+    primeRate = Number(data.rate);
+    primeRateUpdatedAt = data.updated_at;
+  }
+}
+
+async function loadAccounts() {
+  const { data, error } = await sb
+    .from("bb_accounts")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+
+  accountsCache = { bank: [], savings: [] };
+  if (!error && data) {
+    for (const row of data) {
+      if (accountsCache[row.account_type]) accountsCache[row.account_type].push(row);
+    }
+  }
+}
+
+function accountsTotal(type) {
+  return accountsCache[type].reduce((sum, a) => sum + (Number(a.starting_balance) || 0), 0);
+}
+
+async function loadAllEntries() {
+  const { data, error } = await sb
+    .from("bb_entries")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  entriesCache = { income: [], expense: [], asset: [], liability: [] };
+  if (!error && data) {
+    for (const row of data) {
+      if (entriesCache[row.category]) entriesCache[row.category].push(row);
+    }
+  }
+}
+
+function categoryTotal(cat) {
+  return entriesCache[cat].reduce((sum, e) => sum + entryValue(e), 0);
+}
+
+// ---------------- Dashboard rendering ----------------
+function renderDashboard() {
+  const totalIncome = categoryTotal("income");
+  const totalExpense = categoryTotal("expense");
+  const diff = totalIncome - totalExpense;
+  const predictedBank = accountsTotal("bank") + diff;
+  const totalSavings = accountsTotal("savings");
+
+  document.getElementById("summary-bank").textContent = money(predictedBank);
+  document.getElementById("summary-bank-sub").textContent =
+    accountsCache.bank.length + " account" + (accountsCache.bank.length === 1 ? "" : "s") + " + income − expenses";
+  document.getElementById("summary-savings").textContent = money(totalSavings);
+  document.getElementById("summary-savings-sub").textContent =
+    accountsCache.savings.length + " savings account" + (accountsCache.savings.length === 1 ? "" : "s");
+
+  const diffEl = document.getElementById("summary-diff");
+  diffEl.textContent = money(diff);
+  diffEl.classList.remove("positive", "negative");
+  diffEl.classList.add(diff >= 0 ? "positive" : "negative");
+  document.getElementById("summary-diff-sub").textContent =
+    diff >= 0 ? "You're earning more than you spend" : "You're spending more than you earn";
+
+  document.getElementById("bubble-total-income").textContent = money(totalIncome);
+  document.getElementById("bubble-total-expense").textContent = money(totalExpense);
+  document.getElementById("bubble-total-asset").textContent = money(categoryTotal("asset"));
+  document.getElementById("bubble-total-liability").textContent = money(categoryTotal("liability"));
+
+  renderCalendar();
+}
+
+function showScreen(name) {
+  document.getElementById("dashboard-screen").style.display = name === "dashboard" ? "block" : "none";
+  document.getElementById("detail-screen").style.display = name === "detail" ? "block" : "none";
+  document.getElementById("forecast-screen").style.display = name === "forecast" ? "block" : "none";
+  document.getElementById("scenarios-screen").style.display = name === "scenarios" ? "block" : "none";
+  document.getElementById("nav-dashboard").classList.toggle("active", name === "dashboard" || name === "detail");
+  document.getElementById("nav-forecast").classList.toggle("active", name === "forecast");
+  document.getElementById("nav-scenarios").classList.toggle("active", name === "scenarios");
+}
+
+function showDashboard() {
+  renderDashboard();
+  showScreen("dashboard");
+}
+
+// ---------------- Category detail screen ----------------
+function openCategory(cat) {
+  currentCategory = cat;
+  const meta = CATEGORY_META[cat];
+  document.getElementById("detail-title").textContent = meta.label;
+  document.getElementById("detail-total-label").textContent = meta.totalLabel;
+  document.getElementById("detail-dot").className = "cat-dot " + meta.dot;
+
+  document.getElementById("entry-desc").value = "";
+  document.getElementById("entry-amount").value = "";
+  hideLoanFields();
+
+  document.getElementById("entry-recurring").checked = false;
+  document.getElementById("recurring-next-date").value = "";
+  document.getElementById("recurring-frequency").value = "monthly";
+  hideRecurringFields();
+  const recurringWrap = document.getElementById("recurring-toggle-wrap");
+  if (cat === "income" || cat === "expense") {
+    recurringWrap.classList.add("show");
+    document.getElementById("recurring-date-label").textContent =
+      cat === "income" ? "Next payment date" : "Next due date";
+  } else {
+    recurringWrap.classList.remove("show");
+  }
+
+  const badge = document.getElementById("prime-badge");
+  if (cat === "liability") {
+    badge.classList.remove("hidden");
+    document.getElementById("prime-badge-value").textContent = primeRate != null ? pct(primeRate) : "not set yet";
+    document.getElementById("prime-badge-updated").textContent = primeRateUpdatedAt
+      ? " (updated " + new Date(primeRateUpdatedAt).toLocaleDateString("en-ZA") + ")"
+      : "";
+  } else {
+    badge.classList.add("hidden");
+  }
+
+  renderEntryList();
+  showScreen("detail");
+}
+
+function closeCategory() {
+  currentCategory = null;
+  showDashboard();
+}
+
+function showForecast() {
+  renderForecast();
+  showScreen("forecast");
+}
+
+async function showScenarios() {
+  if (!scenariosLoaded) {
+    await loadScenarios();
+  }
+  renderScenarios();
+  showScreen("scenarios");
+}
+
+function showLoanFields() {
+  document.getElementById("loan-fields").classList.add("show");
+  document.getElementById("entry-amount-field").classList.add("hidden");
+  document.getElementById("entry-amount").required = false;
+}
+
+function hideLoanFields() {
+  document.getElementById("loan-fields").classList.remove("show");
+  document.getElementById("entry-amount-field").classList.remove("hidden");
+  document.getElementById("entry-amount").required = true;
+}
+
+document.getElementById("entry-desc").addEventListener("input", (e) => {
+  if (currentCategory !== "liability") return;
+  const isLoan = /\bloan\b/i.test(e.target.value);
+  if (isLoan) showLoanFields(); else hideLoanFields();
+});
+
+function onLoanRateTypeChange() {
+  const isFixed = document.getElementById("loan-rate-type").value === "fixed";
+  document.getElementById("loan-margin-field").classList.toggle("hidden", isFixed);
+  document.getElementById("loan-fixed-rate-field").classList.toggle("hidden", !isFixed);
+}
+
+function onRecurringToggleChange() {
+  if (document.getElementById("entry-recurring").checked) showRecurringFields();
+  else hideRecurringFields();
+}
+
+function showRecurringFields() {
+  document.getElementById("recurring-fields").classList.add("show");
+}
+
+function hideRecurringFields() {
+  document.getElementById("recurring-fields").classList.remove("show");
+}
+
+function renderEntryList() {
+  const list = document.getElementById("entry-list");
+  const empty = document.getElementById("entry-empty");
+  const entries = entriesCache[currentCategory];
+
+  document.getElementById("detail-total-value").textContent = money(categoryTotal(currentCategory));
+
+  list.innerHTML = "";
+  if (entries.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
+  for (const entry of entries) {
+    const row = document.createElement("div");
+
+    if (entry.category === "liability" && entry.is_loan) {
+      row.className = "entry-row loan";
+      const balance = getLoanComputedBalance(entry);
+      const rate = getLoanCurrentRate(entry);
+      const payment = getLoanMonthlyPayment(entry);
+      const monthsLeft = Math.max(0, (Number(entry.term_months) || 0) - monthsElapsed(entry.start_date));
+      const rateTypeLabel = entry.rate_type === "fixed" ? "Fixed" : "Prime + " + pct(entry.prime_margin);
+
+      row.innerHTML = `
+        <div class="loan-top">
+          <span class="desc">${escapeHtml(entry.description)}<span class="loan-badge">${LOAN_TYPE_LABELS[entry.loan_type] || "Loan"}</span></span>
+          <span class="right">
+            <span class="amt">${money(balance)}</span>
+            <button class="btn-danger" data-id="${entry.id}">Delete</button>
+          </span>
+        </div>
+        <div class="loan-meta">
+          <div>Current Rate<span>${pct(rate)}</span></div>
+          <div>Rate Type<span>${rateTypeLabel}</span></div>
+          <div>Monthly Payment<span>${money(payment)}</span></div>
+          <div>Months Remaining<span>${monthsLeft} of ${entry.term_months}</span></div>
+          <div>Original Principal<span>${money(entry.principal)}</span></div>
+        </div>
+        <button class="sim-toggle" type="button">+ Extra payment simulator</button>
+        <div class="loan-sim">
+          <div class="loan-sim-row">
+            <input type="number" class="loan-sim-input" placeholder="Extra amount per month (R)" step="0.01" min="0">
+            <button class="btn-secondary loan-sim-calc" type="button">Calculate</button>
+          </div>
+          <div class="loan-sim-result"></div>
+        </div>
+      `;
+    } else {
+      row.className = "entry-row";
+      const recurringTag = entry.is_recurring
+        ? `<span class="recurring-badge">↻ ${RECURRENCE_LABELS[entry.recurrence_frequency] || "Recurring"}</span>`
+        : "";
+      row.innerHTML = `
+        <span class="desc">${escapeHtml(entry.description)}${recurringTag}</span>
+        <span class="right">
+          <span class="amt">${money(entryValue(entry))}</span>
+          <button class="btn-danger" data-id="${entry.id}">Delete</button>
+        </span>
+      `;
+    }
+    row.querySelector(".btn-danger").addEventListener("click", () => deleteEntry(entry.id));
+
+    const simToggle = row.querySelector(".sim-toggle");
+    if (simToggle) {
+      const simPanel = row.querySelector(".loan-sim");
+      simToggle.addEventListener("click", () => {
+        simPanel.classList.toggle("show");
+        simToggle.textContent = simPanel.classList.contains("show") ? "− Extra payment simulator" : "+ Extra payment simulator";
+      });
+      row.querySelector(".loan-sim-calc").addEventListener("click", () => {
+        const input = row.querySelector(".loan-sim-input");
+        const extra = parseFloat(input.value);
+        const resultEl = row.querySelector(".loan-sim-result");
+        if (isNaN(extra) || extra < 0) {
+          resultEl.innerHTML = `<div class="empty-state" style="padding:8px 0;font-size:12px;">Enter an extra monthly amount to calculate.</div>`;
+          return;
+        }
+        const result = simulateExtraPayment(entry, extra);
+        if (!result) {
+          resultEl.innerHTML = `<div class="empty-state" style="padding:8px 0;font-size:12px;">Can't calculate a payoff with those figures.</div>`;
+          return;
+        }
+        resultEl.innerHTML = `
+          <div class="loan-sim-stats">
+            <div><span class="stat-label">New Payoff</span><strong>${result.newMonths} mo</strong></div>
+            <div><span class="stat-label">Time Saved</span><strong>${result.monthsSaved} mo</strong></div>
+            <div><span class="stat-label">Interest Saved</span><strong>${money(result.interestSaved)}</strong></div>
+          </div>
+        `;
+      });
+    }
+
+    list.appendChild(row);
+  }
+}
+
+document.getElementById("entry-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const descEl = document.getElementById("entry-desc");
+  const amtEl = document.getElementById("entry-amount");
+  const description = descEl.value.trim();
+  const isLoan = currentCategory === "liability" && document.getElementById("loan-fields").classList.contains("show");
+
+  let payload = { user_id: currentUser.id, category: currentCategory, description };
+
+  if (isLoan) {
+    const loanType = document.getElementById("loan-type").value;
+    const rateType = document.getElementById("loan-rate-type").value;
+    const principal = parseFloat(document.getElementById("loan-principal").value);
+    const term = parseInt(document.getElementById("loan-term").value, 10);
+    const startDate = document.getElementById("loan-start-date").value;
+    const marginPct = parseFloat(document.getElementById("loan-margin").value);
+    const fixedPct = parseFloat(document.getElementById("loan-fixed-rate").value);
+
+    if (!description || isNaN(principal) || principal < 0 || !term || !startDate) return;
+    if (rateType === "fixed" && isNaN(fixedPct)) return;
+    if (rateType === "prime_plus" && isNaN(marginPct)) return;
+
+    payload = {
+      ...payload,
+      amount: principal,
+      is_loan: true,
+      loan_type: loanType,
+      rate_type: rateType,
+      fixed_rate: rateType === "fixed" ? fixedPct / 100 : null,
+      prime_margin: rateType === "prime_plus" ? marginPct / 100 : null,
+      principal: principal,
+      term_months: term,
+      start_date: startDate
+    };
+  } else {
+    const amount = parseFloat(amtEl.value);
+    if (!description || isNaN(amount) || amount < 0) return;
+    payload.amount = amount;
+
+    if ((currentCategory === "income" || currentCategory === "expense") &&
+        document.getElementById("entry-recurring").checked) {
+      const frequency = document.getElementById("recurring-frequency").value;
+      const nextDate = document.getElementById("recurring-next-date").value;
+      if (!nextDate) { alert("Please pick a date for the recurring payment."); return; }
+      payload.is_recurring = true;
+      payload.recurrence_frequency = frequency;
+      payload.recurrence_next_date = nextDate;
+    }
+  }
+
+  const { data, error } = await sb.from("bb_entries").insert(payload).select().single();
+
+  if (!error && data) {
+    entriesCache[currentCategory].unshift(data);
+    descEl.value = "";
+    amtEl.value = "";
+    document.getElementById("loan-principal").value = "";
+    document.getElementById("loan-term").value = "";
+    document.getElementById("loan-start-date").value = "";
+    document.getElementById("loan-margin").value = "";
+    document.getElementById("loan-fixed-rate").value = "";
+    hideLoanFields();
+    document.getElementById("entry-recurring").checked = false;
+    document.getElementById("recurring-next-date").value = "";
+    document.getElementById("recurring-frequency").value = "monthly";
+    hideRecurringFields();
+    renderEntryList();
+    renderCalendar();
+    descEl.focus();
+  } else if (error) {
+    alert("Couldn't save that entry: " + error.message);
+  }
+});
+
+async function deleteEntry(id) {
+  const { error } = await sb.from("bb_entries").delete().eq("id", id);
+  if (!error) {
+    entriesCache[currentCategory] = entriesCache[currentCategory].filter(e => e.id !== id);
+    renderEntryList();
+    renderCalendar();
+  }
+}
+
+// ---------------- Prime rate edit modal ----------------
+function openPrimeRateModal() {
+  document.getElementById("prime-modal-input").value = primeRate != null ? (primeRate * 100).toFixed(2) : "";
+  document.getElementById("prime-modal-backdrop").classList.add("show");
+}
+
+function closePrimeRateModal() {
+  document.getElementById("prime-modal-backdrop").classList.remove("show");
+}
+
+async function savePrimeRateModal() {
+  const pctValue = parseFloat(document.getElementById("prime-modal-input").value);
+  if (isNaN(pctValue) || pctValue < 0) return;
+  const rate = pctValue / 100;
+  const nowIso = new Date().toISOString();
+
+  const { error } = await sb
+    .from("bb_prime_rate")
+    .update({ rate, updated_at: nowIso, source: "Manually updated in-app by user" })
+    .eq("id", 1);
+
+  if (!error) {
+    primeRate = rate;
+    primeRateUpdatedAt = nowIso;
+    document.getElementById("prime-badge-value").textContent = pct(primeRate);
+    document.getElementById("prime-badge-updated").textContent =
+      " (updated " + new Date(primeRateUpdatedAt).toLocaleDateString("en-ZA") + ")";
+    renderEntryList();
+    closePrimeRateModal();
+  } else {
+    alert("Couldn't update the prime rate: " + error.message);
+  }
+}
+
+// ---------------- Accounts manager modal ----------------
+function openAccountsModal(type) {
+  accountsModalType = type;
+  document.getElementById("accounts-modal-title").textContent =
+    type === "bank" ? "Bank Accounts" : "Savings Accounts";
+  document.getElementById("accounts-modal-sub").textContent =
+    type === "bank"
+      ? "Add every bank account you want counted toward your predicted balance."
+      : "Add every savings account you want counted toward your savings total.";
+  renderAccountsList();
+  document.getElementById("accounts-modal-backdrop").classList.add("show");
+}
+
+function closeAccountsModal() {
+  document.getElementById("accounts-modal-backdrop").classList.remove("show");
+  accountsModalType = null;
+  renderDashboard();
+}
+
+function renderAccountsList() {
+  const list = document.getElementById("accounts-list");
+  const accounts = accountsCache[accountsModalType];
+  list.innerHTML = "";
+
+  if (accounts.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.style.padding = "16px 0";
+    empty.textContent = "No accounts yet — add your first one below.";
+    list.appendChild(empty);
+  }
+
+  for (const acc of accounts) {
+    const row = document.createElement("div");
+    row.className = "account-row";
+    row.innerHTML = `
+      <span class="acc-name">${escapeHtml(acc.name)}</span>
+      <span class="acc-balance">${money(acc.starting_balance)}</span>
+      <button class="btn-danger" data-id="${acc.id}">Delete</button>
+    `;
+    row.querySelector(".btn-danger").addEventListener("click", () => deleteAccount(acc.id));
+    list.appendChild(row);
+  }
+
+  document.getElementById("accounts-modal-total").textContent = money(accountsTotal(accountsModalType));
+}
+
+document.getElementById("account-add-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const nameEl = document.getElementById("account-add-name");
+  const balEl = document.getElementById("account-add-balance");
+  const name = nameEl.value.trim();
+  const balance = parseFloat(balEl.value);
+  if (!name || isNaN(balance)) return;
+
+  const { data, error } = await sb
+    .from("bb_accounts")
+    .insert({
+      user_id: currentUser.id,
+      name,
+      account_type: accountsModalType,
+      starting_balance: balance
+    })
+    .select()
+    .single();
+
+  if (!error && data) {
+    accountsCache[accountsModalType].push(data);
+    nameEl.value = "";
+    balEl.value = "";
+    renderAccountsList();
+    nameEl.focus();
+  } else if (error) {
+    alert("Couldn't save that account: " + error.message);
+  }
+});
+
+async function deleteAccount(id) {
+  const { error } = await sb.from("bb_accounts").delete().eq("id", id);
+  if (!error) {
+    accountsCache[accountsModalType] = accountsCache[accountsModalType].filter(a => a.id !== id);
+    renderAccountsList();
+  }
+}
+
+// ---------------- Init ----------------
+(async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && session.user) {
+    currentUser = session.user;
+    showApp();
+  } else {
+    showAuth();
+  }
+})();
+</script>
+
+</body>
+</html>
