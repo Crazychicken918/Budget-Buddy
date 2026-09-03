@@ -371,6 +371,18 @@
   .entry-row.loan .loan-meta div { font-size: 11.5px; color: var(--muted); }
   .entry-row.loan .loan-meta span { display: block; color: var(--text); font-size: 13px; font-weight: 600; margin-top: 2px; }
 
+  .sim-toggle { margin-top: 10px; font-size: 12px; color: var(--accent); padding: 4px 0; }
+  .sim-toggle:hover { text-decoration: underline; }
+  .loan-sim { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .loan-sim.show { display: block; }
+  .loan-sim-row { display: flex; gap: 8px; }
+  .loan-sim-input { flex: 1; font-size: 13px; padding: 8px 10px; }
+  .loan-sim-row button { flex: 0 0 auto; font-size: 12.5px; padding: 8px 12px; }
+  .loan-sim-stats { display: flex; gap: 8px; margin-top: 10px; }
+  .loan-sim-stats > div { flex: 1; background: var(--bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .loan-sim-stats .stat-label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .loan-sim-stats strong { font-size: 13.5px; color: var(--text); }
+
   /* ---------- Recurring payment fields ---------- */
   .recurring-toggle { display: none; align-items: center; }
   .recurring-toggle.show { display: flex; }
@@ -443,6 +455,26 @@
   .forecast-controls { display: flex; align-items: center; gap: 10px; }
   .forecast-controls label { margin-bottom: 0; }
   .forecast-controls select { width: auto; min-width: 140px; }
+  .whatif-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .whatif-header { display: flex; align-items: center; justify-content: space-between; }
+  .whatif-header h3 { margin: 0; font-size: 15px; }
+  .whatif-sub { color: var(--muted); font-size: 12.5px; margin: 4px 0 14px 0; }
+  .whatif-row { margin-bottom: 12px; }
+  .whatif-row:last-child { margin-bottom: 0; }
+  .whatif-row label { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text); margin-bottom: 6px; }
+  .whatif-row label span { color: var(--accent); font-weight: 700; }
+  .whatif-row input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+  .networth-section { margin-top: 34px; }
+  .networth-section h3 { margin: 0 0 4px 0; font-size: 17px; }
+
   .forecast-summary-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -602,7 +634,16 @@
 <div id="app-screen">
   <header class="topbar">
     <div><h1>Budget Buddy <span class="user-email" id="user-email-label"></span></h1></div>
-    <button class="btn-secondary" onclick="logout()">Log Out</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <select id="currency-select" onchange="onCurrencyChange()" style="width:auto;" title="All amounts are stored in South African Rand (ZAR) and converted for display using live exchange rates.">
+        <option value="ZAR">R — ZAR</option>
+        <option value="USD">$ — USD</option>
+        <option value="EUR">€ — EUR</option>
+        <option value="GBP">£ — GBP</option>
+      </select>
+      <button class="btn-secondary" onclick="exportDataCSV()" title="Download all your data as a CSV file">Export CSV</button>
+      <button class="btn-secondary" onclick="logout()">Log Out</button>
+    </div>
   </header>
 
   <nav class="main-nav">
@@ -791,6 +832,22 @@
         </div>
       </div>
 
+      <div class="whatif-card">
+        <div class="whatif-header">
+          <h3>What-if</h3>
+          <button class="btn-icon" onclick="resetWhatIf()" title="Reset to actual figures">Reset</button>
+        </div>
+        <p class="whatif-sub">Temporarily nudge your recurring totals to see the effect below — nothing here is saved.</p>
+        <div class="whatif-row">
+          <label for="whatif-income">Recurring income <span id="whatif-income-value">+0%</span></label>
+          <input type="range" id="whatif-income" min="-50" max="50" value="0" step="5" oninput="onWhatIfChange()">
+        </div>
+        <div class="whatif-row">
+          <label for="whatif-expense">Recurring expenses <span id="whatif-expense-value">+0%</span></label>
+          <input type="range" id="whatif-expense" min="-50" max="50" value="0" step="5" oninput="onWhatIfChange()">
+        </div>
+      </div>
+
       <div class="forecast-summary-card" id="forecast-summary-card">
         <div class="label">Projected balance in <span id="forecast-summary-months">6 months</span></div>
         <div class="value" id="forecast-summary-balance">R0.00</div>
@@ -814,6 +871,17 @@
           </thead>
           <tbody id="forecast-tbody"></tbody>
         </table>
+      </div>
+
+      <div class="networth-section">
+        <h3>Net Worth Projection</h3>
+        <p class="forecast-sub">Bank + savings + other assets, minus other liabilities and declining loan balances, projected over the same horizon.</p>
+        <div class="forecast-summary-card">
+          <div class="label">Projected net worth in <span id="networth-summary-months">6 months</span></div>
+          <div class="value" id="networth-summary-value">R0.00</div>
+          <div class="sub" id="networth-summary-change">—</div>
+        </div>
+        <div class="forecast-chart-wrap" id="networth-chart-wrap"></div>
       </div>
 
       <div class="empty-state hidden" id="forecast-empty">
@@ -925,6 +993,19 @@ let calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(),
 let scenariosCache = [];        // [{ id, name, discount_rate, cashflows: [{id, period, amount}] }]
 let scenariosLoaded = false;
 
+// ---------------- Currency display ----------------
+// Everything is stored in South African Rand (ZAR) — this only converts
+// what's shown on screen. Pick a display currency and it's remembered on
+// this device (localStorage), then every money() call converts using a
+// live exchange rate fetched from api.frankfurter.app (free, no key, ECB
+// reference rates). If the rate fetch fails and there's no cached rate,
+// display falls back to ZAR so numbers are never silently wrong.
+const CURRENCY_SYMBOLS = { ZAR: "R", USD: "$", EUR: "€", GBP: "£" };
+let displayCurrency = "ZAR";
+try { displayCurrency = localStorage.getItem("bb_currency") || "ZAR"; } catch (e) {}
+let exchangeRates = { ZAR: 1 };
+let ratesLoaded = false;
+
 const LOAN_TYPE_LABELS = { mortgage: "Mortgage", car: "Car Loan", personal: "Personal Loan" };
 
 const CATEGORY_META = {
@@ -934,10 +1015,54 @@ const CATEGORY_META = {
   liability: { label: "Liabilities",totalLabel: "Total Liabilities",dot: "cat-liability" }
 };
 
+// n is always a ZAR amount (that's what's stored) — converts to the
+// selected display currency using the last-loaded exchange rate.
 function money(n) {
-  const v = Number(n) || 0;
+  const raw = Number(n) || 0;
+  const rate = exchangeRates[displayCurrency] || 1;
+  const v = raw * rate;
   const sign = v < 0 ? "-" : "";
-  return sign + "R" + Math.abs(v).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const symbol = CURRENCY_SYMBOLS[displayCurrency] || "R";
+  return sign + symbol + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function loadExchangeRates() {
+  try {
+    const res = await fetch("https://api.frankfurter.app/latest?from=ZAR&to=USD,EUR,GBP");
+    if (!res.ok) throw new Error("bad response");
+    const data = await res.json();
+    exchangeRates = { ZAR: 1, ...data.rates };
+    ratesLoaded = true;
+    try { localStorage.setItem("bb_rates_cache", JSON.stringify({ rates: exchangeRates, date: data.date })); } catch (e) {}
+  } catch (err) {
+    let usedCache = false;
+    try {
+      const cached = JSON.parse(localStorage.getItem("bb_rates_cache") || "null");
+      if (cached && cached.rates) { exchangeRates = cached.rates; ratesLoaded = true; usedCache = true; }
+    } catch (e) {}
+    if (!usedCache && displayCurrency !== "ZAR") {
+      // No live rate and nothing cached — fall back to ZAR rather than show wrong numbers under a foreign symbol.
+      displayCurrency = "ZAR";
+      try { localStorage.setItem("bb_currency", "ZAR"); } catch (e) {}
+    }
+  }
+  const sel = document.getElementById("currency-select");
+  if (sel) sel.value = displayCurrency;
+}
+
+function onCurrencyChange() {
+  displayCurrency = document.getElementById("currency-select").value;
+  try { localStorage.setItem("bb_currency", displayCurrency); } catch (e) {}
+  refreshCurrencyViews();
+}
+
+// Re-renders whichever screens are currently visible so every money()
+// figure updates immediately after switching currency.
+function refreshCurrencyViews() {
+  renderDashboard();
+  if (currentCategory) renderEntryList();
+  if (document.getElementById("forecast-screen").style.display !== "none") renderForecast();
+  if (document.getElementById("scenarios-screen").style.display !== "none") renderScenarios();
 }
 
 function pct(n) {
@@ -949,6 +1074,69 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ---------------- CSV export ----------------
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function exportDataCSV() {
+  const lines = [];
+
+  lines.push("Budget Buddy data export — " + new Date().toLocaleString("en-ZA"));
+  lines.push("All amounts below are in South African Rand (ZAR), regardless of the display currency selected in the app.");
+  lines.push("");
+
+  lines.push("ENTRIES");
+  lines.push([
+    "Category", "Description", "Amount", "Recurring", "Frequency", "Next/Due Date",
+    "Is Loan", "Loan Type", "Rate Type", "Fixed Rate %", "Prime Margin %",
+    "Principal", "Term (months)", "Start Date"
+  ].map(csvCell).join(","));
+
+  for (const cat of ["income", "expense", "asset", "liability"]) {
+    for (const e of entriesCache[cat]) {
+      lines.push([
+        cat,
+        e.description,
+        e.amount,
+        e.is_recurring ? "Yes" : "No",
+        e.is_recurring ? (RECURRENCE_LABELS[e.recurrence_frequency] || "") : "",
+        e.is_recurring ? e.recurrence_next_date : "",
+        e.is_loan ? "Yes" : "No",
+        e.is_loan ? (LOAN_TYPE_LABELS[e.loan_type] || "") : "",
+        e.is_loan ? e.rate_type : "",
+        e.is_loan && e.rate_type === "fixed" ? (Number(e.fixed_rate) * 100).toFixed(2) : "",
+        e.is_loan && e.rate_type === "prime_plus" ? (Number(e.prime_margin) * 100).toFixed(2) : "",
+        e.is_loan ? e.principal : "",
+        e.is_loan ? e.term_months : "",
+        e.is_loan ? e.start_date : ""
+      ].map(csvCell).join(","));
+    }
+  }
+
+  lines.push("");
+  lines.push("ACCOUNTS");
+  lines.push(["Account Type", "Name", "Balance"].map(csvCell).join(","));
+  for (const type of ["bank", "savings"]) {
+    for (const a of accountsCache[type]) {
+      lines.push([type, a.name, a.starting_balance].map(csvCell).join(","));
+    }
+  }
+
+  const csvContent = lines.join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "budget-buddy-export-" + new Date().toISOString().slice(0, 10) + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ---------------- Loan math ----------------
@@ -995,6 +1183,43 @@ function getLoanMonthlyPayment(entry) {
   const n = Number(entry.term_months) || 0;
   const pv = Number(entry.principal) || 0;
   return pmtCalc(rate / 12, n, pv);
+}
+
+// Simulates paying off a loan balance with a fixed monthly payment, month
+// by month, until it reaches zero. Returns null if the payment doesn't even
+// cover the interest (balance would never shrink).
+function simulateLoanPayoff(startBalance, monthlyRate, monthlyPayment) {
+  let balance = startBalance;
+  let months = 0;
+  let interestPaid = 0;
+  while (balance > 0.01 && months < 1200) {
+    const interest = balance * monthlyRate;
+    const principalPortion = monthlyPayment - interest;
+    if (principalPortion <= 0) return null;
+    interestPaid += interest;
+    balance -= principalPortion;
+    months++;
+  }
+  return { months, interestPaid };
+}
+
+// Compares the loan's current payoff path against paying `extraAmount`
+// more per month, using the loan's current computed balance and rate.
+function simulateExtraPayment(entry, extraAmount) {
+  const balance = getLoanComputedBalance(entry);
+  const monthlyRate = getLoanCurrentRate(entry) / 12;
+  const basePayment = getLoanMonthlyPayment(entry);
+
+  const baseline = simulateLoanPayoff(balance, monthlyRate, basePayment);
+  const withExtra = simulateLoanPayoff(balance, monthlyRate, basePayment + extraAmount);
+  if (!baseline || !withExtra) return null;
+
+  return {
+    baselineMonths: baseline.months,
+    newMonths: withExtra.months,
+    monthsSaved: baseline.months - withExtra.months,
+    interestSaved: baseline.interestPaid - withExtra.interestPaid
+  };
 }
 
 function entryValue(entry) {
@@ -1123,14 +1348,40 @@ const FORECAST_COLORS = {
   text: "#191a23"
 };
 
+// What-if adjustment: temporary percentage nudges applied only to the
+// forecast projection, never saved to the database.
+let whatIfIncomePct = 0;
+let whatIfExpensePct = 0;
+
+function onWhatIfChange() {
+  whatIfIncomePct = parseInt(document.getElementById("whatif-income").value, 10) || 0;
+  whatIfExpensePct = parseInt(document.getElementById("whatif-expense").value, 10) || 0;
+  document.getElementById("whatif-income-value").textContent = (whatIfIncomePct >= 0 ? "+" : "") + whatIfIncomePct + "%";
+  document.getElementById("whatif-expense-value").textContent = (whatIfExpensePct >= 0 ? "+" : "") + whatIfExpensePct + "%";
+  renderForecast();
+}
+
+function resetWhatIf() {
+  whatIfIncomePct = 0;
+  whatIfExpensePct = 0;
+  document.getElementById("whatif-income").value = 0;
+  document.getElementById("whatif-expense").value = 0;
+  document.getElementById("whatif-income-value").textContent = "+0%";
+  document.getElementById("whatif-expense-value").textContent = "+0%";
+  renderForecast();
+}
+
 // Projects the predicted bank balance forward month by month using only
 // entries marked recurring (income/expense) plus active loan repayments —
-// reuses the same occurrence logic as the payments calendar.
+// reuses the same occurrence logic as the payments calendar. The what-if
+// sliders scale the recurring totals only within this projection.
 function computeForecast(months) {
   const startBalance = accountsTotal("bank") + (categoryTotal("income") - categoryTotal("expense"));
   const recurringIncome = entriesCache.income.filter(e => e.is_recurring);
   const recurringExpense = entriesCache.expense.filter(e => e.is_recurring);
   const loans = entriesCache.liability.filter(e => e.is_loan && e.start_date && e.term_months);
+  const incomeFactor = 1 + (whatIfIncomePct / 100);
+  const expenseFactor = 1 + (whatIfExpensePct / 100);
 
   const today = new Date();
   let balance = startBalance;
@@ -1144,13 +1395,13 @@ function computeForecast(months) {
     let incomeTotal = 0;
     for (const e of recurringIncome) {
       const occ = getOccurrencesInMonth(e, year, month);
-      incomeTotal += occ.length * (Number(e.amount) || 0);
+      incomeTotal += occ.length * (Number(e.amount) || 0) * incomeFactor;
     }
 
     let expenseTotal = 0;
     for (const e of recurringExpense) {
       const occ = getOccurrencesInMonth(e, year, month);
-      expenseTotal += occ.length * (Number(e.amount) || 0);
+      expenseTotal += occ.length * (Number(e.amount) || 0) * expenseFactor;
     }
 
     let loanTotal = 0;
@@ -1178,10 +1429,12 @@ function computeForecast(months) {
   return { startBalance, rows };
 }
 
-function renderForecastChart(points) {
-  const wrap = document.getElementById("forecast-chart-wrap");
-  const w = 640, h = 220, padL = 60, padR = 16, padT = 16, padB = 28;
-  const values = points.map(p => p.balance);
+// Renders a simple line/area chart into the given container. `points` is
+// [{label, value}]. Shared by the cash flow forecast and net worth charts.
+function renderLineChart(containerId, points) {
+  const wrap = document.getElementById(containerId);
+  const w = 640, h = 220, padL = 70, padR = 16, padT = 16, padB = 28;
+  const values = points.map(p => p.value);
   const min = Math.min(0, ...values);
   const max = Math.max(0, ...values);
   const range = (max - min) || 1;
@@ -1192,8 +1445,8 @@ function renderForecastChart(points) {
   const yFor = (v) => padT + plotH - ((v - min) / range) * plotH;
   const zeroY = yFor(0);
 
-  const linePoints = points.map((p, i) => `${xFor(i)},${yFor(p.balance)}`).join(" ");
-  const areaPoints = `${xFor(0)},${zeroY} ` + points.map((p, i) => `${xFor(i)},${yFor(p.balance)}`).join(" ") + ` ${xFor(points.length - 1)},${zeroY}`;
+  const linePoints = points.map((p, i) => `${xFor(i)},${yFor(p.value)}`).join(" ");
+  const areaPoints = `${xFor(0)},${zeroY} ` + points.map((p, i) => `${xFor(i)},${yFor(p.value)}`).join(" ") + ` ${xFor(points.length - 1)},${zeroY}`;
 
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="220" preserveAspectRatio="xMidYMid meet">`;
   svg += `<text x="${padL - 8}" y="${padT + 4}" text-anchor="end" font-size="10" fill="${FORECAST_COLORS.muted}">${money(max)}</text>`;
@@ -1203,8 +1456,8 @@ function renderForecastChart(points) {
   svg += `<polyline points="${linePoints}" fill="none" stroke="${FORECAST_COLORS.accent}" stroke-width="2.5" stroke-linejoin="round" />`;
 
   points.forEach((p, i) => {
-    const cx = xFor(i), cy = yFor(p.balance);
-    const color = p.balance < 0 ? FORECAST_COLORS.expense : FORECAST_COLORS.accent;
+    const cx = xFor(i), cy = yFor(p.value);
+    const color = p.value < 0 ? FORECAST_COLORS.expense : FORECAST_COLORS.accent;
     svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="#ffffff" stroke-width="1.5" />`;
     if (i === 0 || i === points.length - 1 || i % Math.ceil(points.length / 8 || 1) === 0) {
       svg += `<text x="${cx}" y="${h - 8}" text-anchor="middle" font-size="10" fill="${FORECAST_COLORS.muted}">${escapeHtml(p.label)}</text>`;
@@ -1213,6 +1466,39 @@ function renderForecastChart(points) {
 
   svg += `</svg>`;
   wrap.innerHTML = svg;
+}
+
+// Net worth = bank + savings + other assets − other (non-loan) liabilities
+// − remaining loan balances, projected forward the same number of months.
+// Reuses the cash-flow forecast's projected bank balance per month (which
+// already reflects the what-if sliders) and declines each loan's balance
+// using the same amortization math as the Liabilities tab.
+function computeNetWorth(months, cashRows, startBalance) {
+  const savingsTotal = accountsTotal("savings");
+  const otherAssetsTotal = categoryTotal("asset");
+  const nonLoanLiabilities = entriesCache.liability
+    .filter(e => !e.is_loan)
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const loans = entriesCache.liability.filter(e => e.is_loan);
+
+  const startLoanBalance = loans.reduce((sum, loan) => sum + getLoanComputedBalance(loan), 0);
+  const startNetWorth = startBalance + savingsTotal + otherAssetsTotal - nonLoanLiabilities - startLoanBalance;
+
+  const rows = cashRows.map((r, idx) => {
+    const monthsAhead = idx + 1;
+    let loanBalanceTotal = 0;
+    for (const loan of loans) {
+      const rate = getLoanCurrentRate(loan);
+      const n = Number(loan.term_months) || 0;
+      const pv = Number(loan.principal) || 0;
+      const p = monthsElapsed(loan.start_date) + monthsAhead;
+      loanBalanceTotal += remainingBalance(rate / 12, n, p, pv);
+    }
+    const netWorth = r.balance + savingsTotal + otherAssetsTotal - nonLoanLiabilities - loanBalanceTotal;
+    return { year: r.year, month: r.month, netWorth };
+  });
+
+  return { startNetWorth, rows };
 }
 
 function renderForecast() {
@@ -1247,10 +1533,10 @@ function renderForecast() {
     warningEl.classList.add("hidden");
   }
 
-  const points = [{ label: "Now", balance: startBalance }].concat(
-    rows.map(r => ({ label: monthNames[r.month] + " '" + String(r.year).slice(2), balance: r.balance }))
+  const points = [{ label: "Now", value: startBalance }].concat(
+    rows.map(r => ({ label: monthNames[r.month] + " '" + String(r.year).slice(2), value: r.balance }))
   );
-  renderForecastChart(points);
+  renderLineChart("forecast-chart-wrap", points);
 
   const tbody = document.getElementById("forecast-tbody");
   tbody.innerHTML = rows.map(r => `
@@ -1263,6 +1549,24 @@ function renderForecast() {
       <td class="balance-cell" style="color:${r.balance < 0 ? 'var(--expense)' : 'var(--text)'}">${money(r.balance)}</td>
     </tr>
   `).join("");
+
+  // ---- Net worth projection ----
+  const { startNetWorth, rows: nwRows } = computeNetWorth(months, rows, startBalance);
+  const lastNw = nwRows[nwRows.length - 1];
+  const endNetWorth = lastNw ? lastNw.netWorth : startNetWorth;
+  const nwChange = endNetWorth - startNetWorth;
+
+  document.getElementById("networth-summary-months").textContent = months + " month" + (months === 1 ? "" : "s");
+  const nwValEl = document.getElementById("networth-summary-value");
+  nwValEl.textContent = money(endNetWorth);
+  nwValEl.style.color = endNetWorth < 0 ? "var(--expense)" : "var(--text)";
+  document.getElementById("networth-summary-change").textContent =
+    (nwChange >= 0 ? "Up " : "Down ") + money(Math.abs(nwChange)) + " from today's net worth (" + money(startNetWorth) + ")";
+
+  const nwPoints = [{ label: "Now", value: startNetWorth }].concat(
+    nwRows.map(r => ({ label: monthNames[r.month] + " '" + String(r.year).slice(2), value: r.netWorth }))
+  );
+  renderLineChart("networth-chart-wrap", nwPoints);
 }
 
 // ---------------- Scenario comparison (NPV / IRR) ----------------
@@ -1528,9 +1832,11 @@ async function showApp() {
   document.getElementById("auth-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("user-email-label").textContent = currentUser.email;
+  document.getElementById("currency-select").value = displayCurrency;
   await loadPrimeRate();
   await loadAccounts();
   await loadAllEntries();
+  await loadExchangeRates();
   showDashboard();
 }
 
@@ -1761,6 +2067,14 @@ function renderEntryList() {
           <div>Months Remaining<span>${monthsLeft} of ${entry.term_months}</span></div>
           <div>Original Principal<span>${money(entry.principal)}</span></div>
         </div>
+        <button class="sim-toggle" type="button">+ Extra payment simulator</button>
+        <div class="loan-sim">
+          <div class="loan-sim-row">
+            <input type="number" class="loan-sim-input" placeholder="Extra amount per month (R)" step="0.01" min="0">
+            <button class="btn-secondary loan-sim-calc" type="button">Calculate</button>
+          </div>
+          <div class="loan-sim-result"></div>
+        </div>
       `;
     } else {
       row.className = "entry-row";
@@ -1776,6 +2090,37 @@ function renderEntryList() {
       `;
     }
     row.querySelector(".btn-danger").addEventListener("click", () => deleteEntry(entry.id));
+
+    const simToggle = row.querySelector(".sim-toggle");
+    if (simToggle) {
+      const simPanel = row.querySelector(".loan-sim");
+      simToggle.addEventListener("click", () => {
+        simPanel.classList.toggle("show");
+        simToggle.textContent = simPanel.classList.contains("show") ? "− Extra payment simulator" : "+ Extra payment simulator";
+      });
+      row.querySelector(".loan-sim-calc").addEventListener("click", () => {
+        const input = row.querySelector(".loan-sim-input");
+        const extra = parseFloat(input.value);
+        const resultEl = row.querySelector(".loan-sim-result");
+        if (isNaN(extra) || extra < 0) {
+          resultEl.innerHTML = `<div class="empty-state" style="padding:8px 0;font-size:12px;">Enter an extra monthly amount to calculate.</div>`;
+          return;
+        }
+        const result = simulateExtraPayment(entry, extra);
+        if (!result) {
+          resultEl.innerHTML = `<div class="empty-state" style="padding:8px 0;font-size:12px;">Can't calculate a payoff with those figures.</div>`;
+          return;
+        }
+        resultEl.innerHTML = `
+          <div class="loan-sim-stats">
+            <div><span class="stat-label">New Payoff</span><strong>${result.newMonths} mo</strong></div>
+            <div><span class="stat-label">Time Saved</span><strong>${result.monthsSaved} mo</strong></div>
+            <div><span class="stat-label">Interest Saved</span><strong>${money(result.interestSaved)}</strong></div>
+          </div>
+        `;
+      });
+    }
+
     list.appendChild(row);
   }
 }
