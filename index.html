@@ -140,6 +140,26 @@
   header.topbar .user-email { color: var(--muted); font-size: 12.5px; margin-left: 10px; font-weight: 400; }
   main { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px 20px; }
 
+  /* ---------- Main nav ---------- */
+  .main-nav {
+    display: flex;
+    gap: 4px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 10px 20px 0 20px;
+  }
+  .nav-link {
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid transparent;
+  }
+  .nav-link:hover { color: var(--text); background: var(--card-hover); }
+  .nav-link.active { color: var(--accent); border-bottom-color: var(--accent); }
+
   /* ---------- Summary cards ---------- */
   .summary-grid {
     display: grid;
@@ -416,6 +436,117 @@
   .cal-pill.cal-in { background: var(--income-bg); color: var(--income); }
   .cal-pill.cal-out { background: var(--expense-bg); color: var(--expense); }
 
+  /* ---------- Forecast ---------- */
+  .forecast-intro { margin-bottom: 20px; }
+  .forecast-intro h2 { margin: 0 0 6px 0; font-size: 20px; }
+  .forecast-sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px 0; max-width: 600px; }
+  .forecast-controls { display: flex; align-items: center; gap: 10px; }
+  .forecast-controls label { margin-bottom: 0; }
+  .forecast-controls select { width: auto; min-width: 140px; }
+  .forecast-summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .forecast-summary-card .label { color: var(--muted); font-size: 12.5px; }
+  .forecast-summary-card .value { font-size: 30px; font-weight: 700; margin-top: 6px; }
+  .forecast-summary-card .sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .forecast-warning {
+    margin-top: 12px;
+    background: var(--expense-bg);
+    color: var(--expense);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .forecast-chart-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 16px 4px 16px;
+    margin-bottom: 20px;
+  }
+  .forecast-table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 6px 18px;
+    overflow-x: auto;
+  }
+  .forecast-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .forecast-table th {
+    text-align: right;
+    color: var(--muted);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .forecast-table th:first-child { text-align: left; }
+  .forecast-table td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .forecast-table td:first-child { text-align: left; font-weight: 600; }
+  .forecast-table tr:last-child td { border-bottom: none; }
+  .forecast-table td.balance-cell { font-weight: 700; }
+
+  /* ---------- Scenarios (NPV/IRR comparison) ---------- */
+  .scenarios-intro { margin-bottom: 22px; }
+  .scenarios-intro h2 { margin: 0 0 6px 0; font-size: 20px; }
+  .scenarios-sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px 0; max-width: 560px; }
+  .scenarios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .scenario-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 18px 16px 18px;
+    flex: 1 1 300px;
+    min-width: 280px;
+    max-width: 380px;
+  }
+  .scenario-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .scenario-name { font-weight: 700; font-size: 15px; }
+  .scenario-rate { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .cashflow-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .cashflow-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+  .cashflow-row .cf-label { color: var(--muted); }
+  .cashflow-row .cf-amount { font-weight: 700; margin-left: auto; margin-right: 8px; }
+  .cashflow-row .cf-remove { background: transparent; color: var(--muted); border: none; padding: 0 2px; font-size: 15px; font-weight: 700; line-height: 1; }
+  .cashflow-row .cf-remove:hover { color: var(--expense); }
+  .cashflow-add-form { display: flex; gap: 6px; margin-bottom: 14px; }
+  .cashflow-add-form input { font-size: 13px; padding: 8px 10px; }
+  .cashflow-add-form input.cf-period-input { flex: 0 0 70px; }
+  .cashflow-add-form input.cf-amount-input { flex: 1 1 0; min-width: 70px; }
+  .cashflow-add-form button { flex: 0 0 auto; padding: 8px 12px; font-size: 13px; }
+  .scenario-summary { display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .scenario-summary .stat { flex: 1; background: var(--bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .scenario-summary .stat .stat-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .scenario-summary .stat .stat-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .scenario-delete { background: transparent; color: var(--muted); border: 1px solid rgba(224,64,63,0.3); padding: 5px 9px; font-size: 11.5px; border-radius: 8px; }
+  .scenario-delete:hover { color: var(--expense); }
+
   .app-footer {
     text-align: center;
     padding: 24px 20px 40px 20px;
@@ -473,6 +604,12 @@
     <div><h1>Budget Buddy <span class="user-email" id="user-email-label"></span></h1></div>
     <button class="btn-secondary" onclick="logout()">Log Out</button>
   </header>
+
+  <nav class="main-nav">
+    <button class="nav-link active" id="nav-dashboard" onclick="showDashboard()">Dashboard</button>
+    <button class="nav-link" id="nav-forecast" onclick="showForecast()">Forecast</button>
+    <button class="nav-link" id="nav-scenarios" onclick="showScenarios()">Scenarios</button>
+  </nav>
 
   <main>
     <!-- ---- Dashboard ---- -->
@@ -635,6 +772,68 @@
       <div class="entry-list" id="entry-list"></div>
       <div class="empty-state hidden" id="entry-empty">No entries yet — add your first one above.</div>
     </div>
+
+    <!-- ---- Forecast (cash flow projection) ---- -->
+    <div id="forecast-screen" style="display:none;">
+      <div class="forecast-intro">
+        <h2>Cash Flow Forecast</h2>
+        <p class="forecast-sub">Projects your predicted bank balance forward using your recurring income,
+        recurring expenses, and any loan repayments still in term. One-off entries aren't repeated — only
+        entries marked "Recurring payment" and active loans are projected into future months.</p>
+        <div class="forecast-controls">
+          <label for="forecast-horizon">Forecast horizon</label>
+          <select id="forecast-horizon" onchange="renderForecast()">
+            <option value="3">3 months</option>
+            <option value="6" selected>6 months</option>
+            <option value="12">12 months</option>
+            <option value="24">24 months</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="forecast-summary-card" id="forecast-summary-card">
+        <div class="label">Projected balance in <span id="forecast-summary-months">6 months</span></div>
+        <div class="value" id="forecast-summary-balance">R0.00</div>
+        <div class="sub" id="forecast-summary-change">—</div>
+        <div class="forecast-warning hidden" id="forecast-warning"></div>
+      </div>
+
+      <div class="forecast-chart-wrap" id="forecast-chart-wrap"></div>
+
+      <div class="forecast-table-wrap">
+        <table class="forecast-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Income</th>
+              <th>Expenses</th>
+              <th>Loan Repayments</th>
+              <th>Net</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody id="forecast-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="empty-state hidden" id="forecast-empty">
+        No recurring income or expenses yet — mark an entry as "Recurring payment" in Income or Expenses
+        to see a forecast here.
+      </div>
+    </div>
+
+    <!-- ---- Scenarios (NPV/IRR comparison) ---- -->
+    <div id="scenarios-screen" style="display:none;">
+      <div class="scenarios-intro">
+        <h2>Scenario Comparison</h2>
+        <p class="scenarios-sub">Compare cash flow scenarios side by side using NPV and IRR — useful for
+        comparing loan offers, investments, or any decision with cash flows over time. Period 0 is usually
+        your initial outlay (enter it as a negative amount); later periods are the cash flows that follow.</p>
+        <button class="btn-primary" onclick="openNewScenarioModal()">+ New Scenario</button>
+      </div>
+      <div class="scenarios-grid" id="scenarios-grid"></div>
+      <div class="empty-state hidden" id="scenarios-empty">No scenarios yet — add one above to start comparing.</div>
+    </div>
   </main>
 
   <footer class="app-footer">
@@ -685,6 +884,26 @@
   </div>
 </div>
 
+<!-- ================= New scenario modal ================= -->
+<div class="modal-backdrop" id="scenario-modal-backdrop">
+  <div class="modal">
+    <h3>New Scenario</h3>
+    <div class="modal-sub">Give it a name and the discount rate to use when calculating its NPV.</div>
+    <div class="field">
+      <label for="scenario-name-input">Scenario name</label>
+      <input type="text" id="scenario-name-input" placeholder="e.g. Bank A Loan Offer">
+    </div>
+    <div class="field">
+      <label for="scenario-rate-input">Discount Rate (%)</label>
+      <input type="number" id="scenario-rate-input" step="0.01" placeholder="e.g. 11.5">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeNewScenarioModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveNewScenario()">Create</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // CONFIG — fill these in from your Supabase project settings
@@ -703,6 +922,8 @@ let primeRate = null;           // annual fraction, e.g. 0.105, loaded from bb_p
 let primeRateUpdatedAt = null;
 let accountsModalType = null;   // 'bank' | 'savings'
 let calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let scenariosCache = [];        // [{ id, name, discount_rate, cashflows: [{id, period, amount}] }]
+let scenariosLoaded = false;
 
 const LOAN_TYPE_LABELS = { mortgage: "Mortgage", car: "Car Loan", personal: "Personal Loan" };
 
@@ -715,7 +936,8 @@ const CATEGORY_META = {
 
 function money(n) {
   const v = Number(n) || 0;
-  return "R" + v.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sign = v < 0 ? "-" : "";
+  return sign + "R" + Math.abs(v).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function pct(n) {
@@ -890,6 +1112,354 @@ function renderCalendar() {
   document.getElementById("calendar-empty").classList.toggle("hidden", recurringEntries.length > 0);
 }
 
+// ---------------- Forecast (cash flow projection) ----------------
+const FORECAST_COLORS = {
+  accent: "#7c5cff",
+  accentDim: "#ece7ff",
+  income: "#0fb981",
+  expense: "#f4406a",
+  border: "#edecf5",
+  muted: "#797e91",
+  text: "#191a23"
+};
+
+// Projects the predicted bank balance forward month by month using only
+// entries marked recurring (income/expense) plus active loan repayments —
+// reuses the same occurrence logic as the payments calendar.
+function computeForecast(months) {
+  const startBalance = accountsTotal("bank") + (categoryTotal("income") - categoryTotal("expense"));
+  const recurringIncome = entriesCache.income.filter(e => e.is_recurring);
+  const recurringExpense = entriesCache.expense.filter(e => e.is_recurring);
+  const loans = entriesCache.liability.filter(e => e.is_loan && e.start_date && e.term_months);
+
+  const today = new Date();
+  let balance = startBalance;
+  const rows = [];
+
+  for (let i = 1; i <= months; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth();
+
+    let incomeTotal = 0;
+    for (const e of recurringIncome) {
+      const occ = getOccurrencesInMonth(e, year, month);
+      incomeTotal += occ.length * (Number(e.amount) || 0);
+    }
+
+    let expenseTotal = 0;
+    for (const e of recurringExpense) {
+      const occ = getOccurrencesInMonth(e, year, month);
+      expenseTotal += occ.length * (Number(e.amount) || 0);
+    }
+
+    let loanTotal = 0;
+    for (const loan of loans) {
+      // Reuse the monthly-recurrence logic, anchored at the loan's start date,
+      // then only count it while still inside the loan's term.
+      const occ = getOccurrencesInMonth(
+        { is_recurring: true, recurrence_frequency: "monthly", recurrence_next_date: loan.start_date },
+        year, month
+      );
+      if (occ.length > 0) {
+        const start = new Date(loan.start_date + "T00:00:00");
+        const elapsed = (year - start.getFullYear()) * 12 + (month - start.getMonth());
+        if (elapsed >= 0 && elapsed < Number(loan.term_months)) {
+          loanTotal += getLoanMonthlyPayment(loan);
+        }
+      }
+    }
+
+    const net = incomeTotal - expenseTotal - loanTotal;
+    balance += net;
+    rows.push({ year, month, incomeTotal, expenseTotal, loanTotal, net, balance });
+  }
+
+  return { startBalance, rows };
+}
+
+function renderForecastChart(points) {
+  const wrap = document.getElementById("forecast-chart-wrap");
+  const w = 640, h = 220, padL = 60, padR = 16, padT = 16, padB = 28;
+  const values = points.map(p => p.balance);
+  const min = Math.min(0, ...values);
+  const max = Math.max(0, ...values);
+  const range = (max - min) || 1;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const xStep = points.length > 1 ? plotW / (points.length - 1) : 0;
+  const xFor = (i) => padL + i * xStep;
+  const yFor = (v) => padT + plotH - ((v - min) / range) * plotH;
+  const zeroY = yFor(0);
+
+  const linePoints = points.map((p, i) => `${xFor(i)},${yFor(p.balance)}`).join(" ");
+  const areaPoints = `${xFor(0)},${zeroY} ` + points.map((p, i) => `${xFor(i)},${yFor(p.balance)}`).join(" ") + ` ${xFor(points.length - 1)},${zeroY}`;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="220" preserveAspectRatio="xMidYMid meet">`;
+  svg += `<text x="${padL - 8}" y="${padT + 4}" text-anchor="end" font-size="10" fill="${FORECAST_COLORS.muted}">${money(max)}</text>`;
+  svg += `<text x="${padL - 8}" y="${padT + plotH}" text-anchor="end" font-size="10" fill="${FORECAST_COLORS.muted}">${money(min)}</text>`;
+  svg += `<line x1="${padL}" y1="${zeroY}" x2="${w - padR}" y2="${zeroY}" stroke="${FORECAST_COLORS.border}" stroke-width="1" />`;
+  svg += `<polygon points="${areaPoints}" fill="${FORECAST_COLORS.accentDim}" opacity="0.7" />`;
+  svg += `<polyline points="${linePoints}" fill="none" stroke="${FORECAST_COLORS.accent}" stroke-width="2.5" stroke-linejoin="round" />`;
+
+  points.forEach((p, i) => {
+    const cx = xFor(i), cy = yFor(p.balance);
+    const color = p.balance < 0 ? FORECAST_COLORS.expense : FORECAST_COLORS.accent;
+    svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="#ffffff" stroke-width="1.5" />`;
+    if (i === 0 || i === points.length - 1 || i % Math.ceil(points.length / 8 || 1) === 0) {
+      svg += `<text x="${cx}" y="${h - 8}" text-anchor="middle" font-size="10" fill="${FORECAST_COLORS.muted}">${escapeHtml(p.label)}</text>`;
+    }
+  });
+
+  svg += `</svg>`;
+  wrap.innerHTML = svg;
+}
+
+function renderForecast() {
+  const months = parseInt(document.getElementById("forecast-horizon").value, 10) || 6;
+  const { startBalance, rows } = computeForecast(months);
+
+  const hasRecurring = entriesCache.income.some(e => e.is_recurring) ||
+                        entriesCache.expense.some(e => e.is_recurring) ||
+                        entriesCache.liability.some(e => e.is_loan);
+
+  document.getElementById("forecast-empty").classList.toggle("hidden", hasRecurring);
+
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const last = rows[rows.length - 1];
+  const endBalance = last ? last.balance : startBalance;
+  const change = endBalance - startBalance;
+
+  document.getElementById("forecast-summary-months").textContent = months + " month" + (months === 1 ? "" : "s");
+  const balEl = document.getElementById("forecast-summary-balance");
+  balEl.textContent = money(endBalance);
+  balEl.style.color = endBalance < 0 ? "var(--expense)" : "var(--text)";
+  document.getElementById("forecast-summary-change").textContent =
+    (change >= 0 ? "Up " : "Down ") + money(Math.abs(change)) + " from today's predicted balance (" + money(startBalance) + ")";
+
+  const negativeMonth = rows.find(r => r.balance < 0);
+  const warningEl = document.getElementById("forecast-warning");
+  if (negativeMonth) {
+    warningEl.textContent = "Heads up — your predicted balance dips below R0.00 around " +
+      monthNames[negativeMonth.month] + " " + negativeMonth.year + " if nothing changes.";
+    warningEl.classList.remove("hidden");
+  } else {
+    warningEl.classList.add("hidden");
+  }
+
+  const points = [{ label: "Now", balance: startBalance }].concat(
+    rows.map(r => ({ label: monthNames[r.month] + " '" + String(r.year).slice(2), balance: r.balance }))
+  );
+  renderForecastChart(points);
+
+  const tbody = document.getElementById("forecast-tbody");
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${monthNames[r.month]} ${r.year}</td>
+      <td class="positive">${r.incomeTotal > 0 ? "+" + money(r.incomeTotal) : money(0)}</td>
+      <td class="negative">${r.expenseTotal > 0 ? "-" + money(r.expenseTotal) : money(0)}</td>
+      <td class="negative">${r.loanTotal > 0 ? "-" + money(r.loanTotal) : money(0)}</td>
+      <td class="${r.net >= 0 ? 'positive' : 'negative'}">${r.net >= 0 ? "+" : "-"}${money(Math.abs(r.net))}</td>
+      <td class="balance-cell" style="color:${r.balance < 0 ? 'var(--expense)' : 'var(--text)'}">${money(r.balance)}</td>
+    </tr>
+  `).join("");
+}
+
+// ---------------- Scenario comparison (NPV / IRR) ----------------
+// cashflows: array of {period, amount}, period 0 = initial outlay (usually negative).
+function computeNPV(rate, cashflows) {
+  return cashflows.reduce((sum, cf) => sum + cf.amount / Math.pow(1 + rate, cf.period), 0);
+}
+
+// Bisection method — robust for the irregular cash flows this tool allows
+// (works even when Newton's method would fail to converge or diverge).
+function computeIRR(cashflows) {
+  if (cashflows.length < 2) return null;
+  let low = -0.9999, high = 10; // -99.99% to 1000%
+  let npvLow = computeNPV(low, cashflows);
+  let npvHigh = computeNPV(high, cashflows);
+  if (npvLow === 0) return low;
+  if (npvHigh === 0) return high;
+  if ((npvLow > 0) === (npvHigh > 0)) return null; // no sign change in range — no IRR found
+
+  for (let i = 0; i < 100; i++) {
+    const mid = (low + high) / 2;
+    const npvMid = computeNPV(mid, cashflows);
+    if (Math.abs(npvMid) < 0.01) return mid;
+    if ((npvMid > 0) === (npvLow > 0)) { low = mid; npvLow = npvMid; }
+    else { high = mid; }
+  }
+  return (low + high) / 2;
+}
+
+async function loadScenarios() {
+  const { data: scenarios, error: scErr } = await sb
+    .from("bb_scenarios")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+
+  if (scErr || !scenarios) { scenariosCache = []; scenariosLoaded = true; return; }
+
+  const ids = scenarios.map(s => s.id);
+  let cashflowsByScenario = {};
+  if (ids.length > 0) {
+    const { data: cashflows } = await sb
+      .from("bb_scenario_cashflows")
+      .select("*")
+      .in("scenario_id", ids)
+      .order("period", { ascending: true });
+    for (const cf of (cashflows || [])) {
+      if (!cashflowsByScenario[cf.scenario_id]) cashflowsByScenario[cf.scenario_id] = [];
+      cashflowsByScenario[cf.scenario_id].push(cf);
+    }
+  }
+
+  scenariosCache = scenarios.map(s => ({ ...s, cashflows: cashflowsByScenario[s.id] || [] }));
+  scenariosLoaded = true;
+}
+
+function renderScenarios() {
+  const grid = document.getElementById("scenarios-grid");
+  const empty = document.getElementById("scenarios-empty");
+  grid.innerHTML = "";
+
+  if (scenariosCache.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
+  for (const scenario of scenariosCache) {
+    const card = document.createElement("div");
+    card.className = "scenario-card";
+
+    const cashflows = scenario.cashflows;
+    const npv = cashflows.length > 0 ? computeNPV(Number(scenario.discount_rate) || 0, cashflows) : 0;
+    const irr = computeIRR(cashflows);
+
+    const cfRowsHtml = cashflows.map(cf => `
+      <div class="cashflow-row">
+        <span class="cf-label">${cf.period === 0 ? "Period 0 (Initial)" : "Period " + cf.period}</span>
+        <span class="cf-amount ${cf.amount < 0 ? 'negative' : 'positive'}">${money(cf.amount)}</span>
+        <button class="cf-remove" data-cf-id="${cf.id}" title="Remove">×</button>
+      </div>
+    `).join("") || `<div class="empty-state" style="padding:10px 0;font-size:12.5px;">No cash flows yet.</div>`;
+
+    card.innerHTML = `
+      <div class="scenario-card-header">
+        <div>
+          <div class="scenario-name">${escapeHtml(scenario.name)}</div>
+          <div class="scenario-rate">Discount rate: ${pct(scenario.discount_rate)}</div>
+        </div>
+        <button class="scenario-delete" data-scenario-id="${scenario.id}">Delete</button>
+      </div>
+      <div class="cashflow-list">${cfRowsHtml}</div>
+      <form class="cashflow-add-form" data-scenario-id="${scenario.id}">
+        <input type="number" class="cf-period-input" placeholder="Period" step="1" min="0" required>
+        <input type="number" class="cf-amount-input" placeholder="Amount (R)" step="0.01" required>
+        <button type="submit" class="btn-secondary">Add</button>
+      </form>
+      <div class="scenario-summary">
+        <div class="stat">
+          <div class="stat-label">NPV</div>
+          <div class="stat-value ${npv >= 0 ? 'positive' : 'negative'}">${money(npv)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">IRR</div>
+          <div class="stat-value">${irr === null ? "n/a" : pct(irr)}</div>
+        </div>
+      </div>
+    `;
+
+    card.querySelector(".scenario-delete").addEventListener("click", () => deleteScenario(scenario.id));
+    card.querySelectorAll(".cf-remove").forEach(btn => {
+      btn.addEventListener("click", () => deleteCashflow(scenario.id, btn.dataset.cfId));
+    });
+    card.querySelector(".cashflow-add-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const periodEl = card.querySelector(".cf-period-input");
+      const amountEl = card.querySelector(".cf-amount-input");
+      const period = parseInt(periodEl.value, 10);
+      const amount = parseFloat(amountEl.value);
+      if (isNaN(period) || period < 0 || isNaN(amount)) return;
+      await addCashflow(scenario.id, period, amount);
+    });
+
+    grid.appendChild(card);
+  }
+}
+
+function openNewScenarioModal() {
+  document.getElementById("scenario-name-input").value = "";
+  document.getElementById("scenario-rate-input").value = "";
+  document.getElementById("scenario-modal-backdrop").classList.add("show");
+}
+
+function closeNewScenarioModal() {
+  document.getElementById("scenario-modal-backdrop").classList.remove("show");
+}
+
+async function saveNewScenario() {
+  const name = document.getElementById("scenario-name-input").value.trim();
+  const ratePct = parseFloat(document.getElementById("scenario-rate-input").value);
+  if (!name || isNaN(ratePct) || ratePct < 0) return;
+
+  const { data, error } = await sb
+    .from("bb_scenarios")
+    .insert({ user_id: currentUser.id, name, discount_rate: ratePct / 100 })
+    .select()
+    .single();
+
+  if (!error && data) {
+    scenariosCache.push({ ...data, cashflows: [] });
+    closeNewScenarioModal();
+    renderScenarios();
+  } else if (error) {
+    alert("Couldn't create that scenario: " + error.message);
+  }
+}
+
+async function deleteScenario(id) {
+  const { error } = await sb.from("bb_scenarios").delete().eq("id", id);
+  if (!error) {
+    scenariosCache = scenariosCache.filter(s => s.id !== id);
+    renderScenarios();
+  } else {
+    alert("Couldn't delete that scenario: " + error.message);
+  }
+}
+
+async function addCashflow(scenarioId, period, amount) {
+  const { data, error } = await sb
+    .from("bb_scenario_cashflows")
+    .insert({ scenario_id: scenarioId, period, amount })
+    .select()
+    .single();
+
+  if (!error && data) {
+    const scenario = scenariosCache.find(s => s.id === scenarioId);
+    if (scenario) {
+      scenario.cashflows.push(data);
+      scenario.cashflows.sort((a, b) => a.period - b.period);
+    }
+    renderScenarios();
+  } else if (error) {
+    alert("Couldn't add that cash flow: " + error.message);
+  }
+}
+
+async function deleteCashflow(scenarioId, cashflowId) {
+  const { error } = await sb.from("bb_scenario_cashflows").delete().eq("id", cashflowId);
+  if (!error) {
+    const scenario = scenariosCache.find(s => s.id === scenarioId);
+    if (scenario) scenario.cashflows = scenario.cashflows.filter(cf => cf.id !== cashflowId);
+    renderScenarios();
+  } else {
+    alert("Couldn't remove that cash flow: " + error.message);
+  }
+}
+
 // ---------------- Auth ----------------
 let authMode = "login";
 
@@ -961,7 +1531,6 @@ async function showApp() {
   await loadPrimeRate();
   await loadAccounts();
   await loadAllEntries();
-  renderDashboard();
   showDashboard();
 }
 
@@ -1042,9 +1611,19 @@ function renderDashboard() {
   renderCalendar();
 }
 
+function showScreen(name) {
+  document.getElementById("dashboard-screen").style.display = name === "dashboard" ? "block" : "none";
+  document.getElementById("detail-screen").style.display = name === "detail" ? "block" : "none";
+  document.getElementById("forecast-screen").style.display = name === "forecast" ? "block" : "none";
+  document.getElementById("scenarios-screen").style.display = name === "scenarios" ? "block" : "none";
+  document.getElementById("nav-dashboard").classList.toggle("active", name === "dashboard" || name === "detail");
+  document.getElementById("nav-forecast").classList.toggle("active", name === "forecast");
+  document.getElementById("nav-scenarios").classList.toggle("active", name === "scenarios");
+}
+
 function showDashboard() {
-  document.getElementById("dashboard-screen").style.display = "block";
-  document.getElementById("detail-screen").style.display = "none";
+  renderDashboard();
+  showScreen("dashboard");
 }
 
 // ---------------- Category detail screen ----------------
@@ -1084,14 +1663,25 @@ function openCategory(cat) {
   }
 
   renderEntryList();
-  document.getElementById("dashboard-screen").style.display = "none";
-  document.getElementById("detail-screen").style.display = "block";
+  showScreen("detail");
 }
 
 function closeCategory() {
   currentCategory = null;
-  renderDashboard();
   showDashboard();
+}
+
+function showForecast() {
+  renderForecast();
+  showScreen("forecast");
+}
+
+async function showScenarios() {
+  if (!scenariosLoaded) {
+    await loadScenarios();
+  }
+  renderScenarios();
+  showScreen("scenarios");
 }
 
 function showLoanFields() {
