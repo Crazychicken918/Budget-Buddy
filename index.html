@@ -528,6 +528,124 @@
   .forecast-table tr:last-child td { border-bottom: none; }
   .forecast-table td.balance-cell { font-weight: 700; }
 
+  /* ---------- Weekly digest ---------- */
+  .weekly-digest-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-top: 30px;
+  }
+  .weekly-digest-card h3 { margin: 0 0 2px 0; font-size: 15px; }
+  .weekly-digest-sub { color: var(--muted); font-size: 12px; margin: 0 0 14px 0; }
+  .weekly-digest-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .weekly-digest-stats .stat { flex: 1; min-width: 110px; background: var(--bg); border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .weekly-digest-stats .stat-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .weekly-digest-stats .stat-value { font-size: 17px; font-weight: 700; margin-top: 3px; }
+
+  /* ---------- Savings streak ---------- */
+  .streak-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--liability-bg);
+    color: var(--liability);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  /* ---------- Spending heatmap ---------- */
+  .heatmap-section {
+    margin-top: 30px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+  .heatmap-section h3 { margin: 0 0 2px 0; font-size: 16px; }
+  .heatmap-sub { color: var(--muted); font-size: 12px; margin: 0 0 16px 0; }
+  .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .heatmap-cell {
+    border-radius: 8px;
+    padding: 10px 4px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .heatmap-cell .hm-day { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+  .heatmap-cell .hm-amt { font-size: 11.5px; font-weight: 700; margin-top: 4px; color: var(--text); }
+
+  /* ---------- Goals ---------- */
+  .goals-section { margin-top: 30px; }
+  .goals-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .goals-header h3 { margin: 0; font-size: 17px; }
+  .goals-grid { display: flex; flex-wrap: wrap; gap: 16px; }
+  .goal-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    flex: 1 1 220px;
+    min-width: 200px;
+    max-width: 260px;
+    text-align: center;
+  }
+  .goal-name { font-weight: 700; font-size: 14px; margin-top: 10px; }
+  .goal-amounts { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .goal-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .goal-actions { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+  .goal-actions button { font-size: 11.5px; padding: 6px 10px; }
+
+  /* ---------- Tags ---------- */
+  .tag-filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tag-filter-chip {
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .tag-filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .entry-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .tag-chip {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 6px;
+    padding: 1px 7px;
+  }
+
+  /* ---------- Receipts ---------- */
+  .receipt-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent-dim); padding: 4px 9px; font-size: 11.5px; margin-right: 8px; }
+  .receipt-btn:hover { background: var(--accent-dim); }
+
+  /* ---------- Prime rate shock ---------- */
+  .primeshock-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .primeshock-card h3 { margin: 0 0 2px 0; font-size: 15px; }
+  .primeshock-sub { color: var(--muted); font-size: 12.5px; margin: 4px 0 14px 0; }
+  .primeshock-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  .primeshock-table th { text-align: right; color: var(--muted); font-size: 10.5px; text-transform: uppercase; padding: 8px; border-bottom: 1px solid var(--border); }
+  .primeshock-table th:first-child { text-align: left; }
+  .primeshock-table td { text-align: right; padding: 8px; border-bottom: 1px solid var(--border); }
+  .primeshock-table td:first-child { text-align: left; font-weight: 600; }
+
   /* ---------- Scenarios (NPV/IRR comparison) ---------- */
   .scenarios-intro { margin-bottom: 22px; }
   .scenarios-intro h2 { margin: 0 0 6px 0; font-size: 20px; }
@@ -621,7 +739,7 @@
       </div>
       <div class="field">
         <label for="auth-password">Password</label>
-        <input type="password" id="auth-password" required autocomplete="current-password" placeholder="At least 6 characters" minlength="6">
+        <input type="password" id="auth-password" required autocomplete="current-password" placeholder="At least 8 characters" minlength="8">
       </div>
       <button type="submit" class="btn-primary" id="auth-submit" style="width:100%;">Log In</button>
       <div id="auth-error"></div>
@@ -679,6 +797,8 @@
         </div>
       </div>
 
+      <div class="streak-banner hidden" id="streak-banner"></div>
+
       <div class="bubble-grid">
         <div class="bubble income" onclick="openCategory('income')">
           <div class="icon">↑</div>
@@ -700,6 +820,40 @@
           <div class="title">Liabilities</div>
           <div class="total" id="bubble-total-liability">R0.00</div>
         </div>
+      </div>
+
+      <div class="weekly-digest-card">
+        <h3>This Week</h3>
+        <p class="weekly-digest-sub" id="weekly-digest-range">—</p>
+        <div class="weekly-digest-stats">
+          <div class="stat">
+            <div class="stat-label">Coming In</div>
+            <div class="stat-value positive" id="weekly-digest-income">R0.00</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Going Out</div>
+            <div class="stat-value negative" id="weekly-digest-expense">R0.00</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Net</div>
+            <div class="stat-value" id="weekly-digest-net">R0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="heatmap-section">
+        <h3>Spending by Day of Week</h3>
+        <p class="heatmap-sub">Which days your expenses tend to fall on — based on recurring due-dates and when one-off expenses were logged. Darker = more typically spent.</p>
+        <div class="heatmap-grid" id="heatmap-grid"></div>
+      </div>
+
+      <div class="goals-section">
+        <div class="goals-header">
+          <h3>Savings Goals</h3>
+          <button class="btn-primary" onclick="openGoalModal()">+ New Goal</button>
+        </div>
+        <div class="goals-grid" id="goals-grid"></div>
+        <div class="empty-state hidden" id="goals-empty">No goals yet — add one above to start tracking progress.</div>
       </div>
 
       <div class="calendar-section">
@@ -744,6 +898,14 @@
         <div class="field amount" id="entry-amount-field">
           <label for="entry-amount">Amount (R)</label>
           <input type="number" id="entry-amount" required min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field" id="entry-tags-field">
+          <label for="entry-tags">Tags (optional)</label>
+          <input type="text" id="entry-tags" placeholder="e.g. groceries, essential">
+        </div>
+        <div class="field hidden" id="entry-receipt-field">
+          <label for="entry-receipt">Receipt photo (optional)</label>
+          <input type="file" id="entry-receipt" accept="image/*">
         </div>
         <button type="submit" class="btn-primary">Add</button>
 
@@ -810,6 +972,7 @@
         </div>
       </form>
 
+      <div class="tag-filter-row hidden" id="tag-filter-row"></div>
       <div class="entry-list" id="entry-list"></div>
       <div class="empty-state hidden" id="entry-empty">No entries yet — add your first one above.</div>
     </div>
@@ -846,6 +1009,19 @@
           <label for="whatif-expense">Recurring expenses <span id="whatif-expense-value">+0%</span></label>
           <input type="range" id="whatif-expense" min="-50" max="50" value="0" step="5" oninput="onWhatIfChange()">
         </div>
+        <div class="whatif-row">
+          <label for="whatif-prime">Prime rate shock <span id="whatif-prime-value">+0.00%</span></label>
+          <input type="range" id="whatif-prime" min="-3" max="3" value="0" step="0.25" oninput="onWhatIfChange()">
+        </div>
+      </div>
+
+      <div class="primeshock-card hidden" id="primeshock-card">
+        <h3>Prime Rate Shock Simulator</h3>
+        <p class="primeshock-sub" id="primeshock-sub">If the prime rate moved as above, here's what happens to every prime-linked loan you have — and the forecast and net worth charts below already reflect it.</p>
+        <table class="primeshock-table">
+          <thead><tr><th>Loan</th><th>Current Payment</th><th>New Payment</th><th>Change</th></tr></thead>
+          <tbody id="primeshock-tbody"></tbody>
+        </table>
       </div>
 
       <div class="forecast-summary-card" id="forecast-summary-card">
@@ -948,6 +1124,50 @@
 
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeAccountsModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= New goal modal ================= -->
+<div class="modal-backdrop" id="goal-modal-backdrop">
+  <div class="modal">
+    <h3>New Savings Goal</h3>
+    <div class="modal-sub">Give it a name, a target amount, and an optional target date.</div>
+    <div class="field">
+      <label for="goal-name-input">Goal name</label>
+      <input type="text" id="goal-name-input" placeholder="e.g. Emergency fund">
+    </div>
+    <div class="field">
+      <label for="goal-target-input">Target amount (R)</label>
+      <input type="number" id="goal-target-input" step="0.01" placeholder="e.g. 50000">
+    </div>
+    <div class="field">
+      <label for="goal-current-input">Amount saved so far (R)</label>
+      <input type="number" id="goal-current-input" step="0.01" placeholder="0.00">
+    </div>
+    <div class="field">
+      <label for="goal-date-input">Target date (optional)</label>
+      <input type="date" id="goal-date-input">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeGoalModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveGoal()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Update goal progress modal ================= -->
+<div class="modal-backdrop" id="goal-progress-modal-backdrop">
+  <div class="modal">
+    <h3>Update Progress</h3>
+    <div class="modal-sub" id="goal-progress-modal-sub"></div>
+    <div class="field">
+      <label for="goal-progress-input">Amount saved so far (R)</label>
+      <input type="number" id="goal-progress-input" step="0.01">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeGoalProgressModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveGoalProgress()">Save</button>
     </div>
   </div>
 </div>
@@ -1060,6 +1280,7 @@ function onCurrencyChange() {
 // figure updates immediately after switching currency.
 function refreshCurrencyViews() {
   renderDashboard();
+  renderGoals();
   if (currentCategory) renderEntryList();
   if (document.getElementById("forecast-screen").style.display !== "none") renderForecast();
   if (document.getElementById("scenarios-screen").style.display !== "none") renderScenarios();
@@ -1164,22 +1385,26 @@ function monthsElapsed(startDateStr) {
   return Math.max(0, months);
 }
 
-function getLoanCurrentRate(entry) {
+// shockPts is an optional hypothetical prime-rate change in percentage
+// points (e.g. 0.75 = "prime up 0.75%"), used only by the Prime Rate Shock
+// Simulator on the Forecast tab — it never affects the real stored rate,
+// and has no effect on fixed-rate loans.
+function getLoanCurrentRate(entry, shockPts) {
   if (entry.rate_type === "fixed") return Number(entry.fixed_rate) || 0;
-  const base = primeRate != null ? primeRate : 0;
+  const base = (primeRate != null ? primeRate : 0) + ((shockPts || 0) / 100);
   return base + (Number(entry.prime_margin) || 0);
 }
 
-function getLoanComputedBalance(entry) {
-  const rate = getLoanCurrentRate(entry);
+function getLoanComputedBalance(entry, shockPts) {
+  const rate = getLoanCurrentRate(entry, shockPts);
   const n = Number(entry.term_months) || 0;
   const p = monthsElapsed(entry.start_date);
   const pv = Number(entry.principal) || 0;
   return remainingBalance(rate / 12, n, p, pv);
 }
 
-function getLoanMonthlyPayment(entry) {
-  const rate = getLoanCurrentRate(entry);
+function getLoanMonthlyPayment(entry, shockPts) {
+  const rate = getLoanCurrentRate(entry, shockPts);
   const n = Number(entry.term_months) || 0;
   const pv = Number(entry.principal) || 0;
   return pmtCalc(rate / 12, n, pv);
@@ -1352,23 +1577,71 @@ const FORECAST_COLORS = {
 // forecast projection, never saved to the database.
 let whatIfIncomePct = 0;
 let whatIfExpensePct = 0;
+let whatIfPrimeShockPts = 0; // percentage points, e.g. 0.75 = "prime up 0.75%"
 
 function onWhatIfChange() {
   whatIfIncomePct = parseInt(document.getElementById("whatif-income").value, 10) || 0;
   whatIfExpensePct = parseInt(document.getElementById("whatif-expense").value, 10) || 0;
+  whatIfPrimeShockPts = parseFloat(document.getElementById("whatif-prime").value) || 0;
   document.getElementById("whatif-income-value").textContent = (whatIfIncomePct >= 0 ? "+" : "") + whatIfIncomePct + "%";
   document.getElementById("whatif-expense-value").textContent = (whatIfExpensePct >= 0 ? "+" : "") + whatIfExpensePct + "%";
+  document.getElementById("whatif-prime-value").textContent = (whatIfPrimeShockPts >= 0 ? "+" : "") + whatIfPrimeShockPts.toFixed(2) + "%";
   renderForecast();
 }
 
 function resetWhatIf() {
   whatIfIncomePct = 0;
   whatIfExpensePct = 0;
+  whatIfPrimeShockPts = 0;
   document.getElementById("whatif-income").value = 0;
   document.getElementById("whatif-expense").value = 0;
+  document.getElementById("whatif-prime").value = 0;
   document.getElementById("whatif-income-value").textContent = "+0%";
   document.getElementById("whatif-expense-value").textContent = "+0%";
+  document.getElementById("whatif-prime-value").textContent = "+0.00%";
   renderForecast();
+}
+
+// Lists every prime-linked loan's current vs. hypothetically-shocked
+// monthly payment side by side, for the Prime Rate Shock Simulator.
+function renderPrimeShockTable() {
+  const card = document.getElementById("primeshock-card");
+  const primeLoans = entriesCache.liability.filter(e => e.is_loan && e.rate_type === "prime_plus");
+
+  if (whatIfPrimeShockPts === 0 || primeLoans.length === 0) {
+    card.classList.add("hidden");
+    return;
+  }
+  card.classList.remove("hidden");
+
+  const direction = whatIfPrimeShockPts > 0 ? "up" : "down";
+  document.getElementById("primeshock-sub").textContent =
+    `If prime moves ${direction} ${Math.abs(whatIfPrimeShockPts).toFixed(2)}%, here's what happens to every prime-linked loan you have — the forecast and net worth charts below already reflect it.`;
+
+  let totalCurrent = 0, totalNew = 0;
+  const tbody = document.getElementById("primeshock-tbody");
+  tbody.innerHTML = primeLoans.map(loan => {
+    const current = getLoanMonthlyPayment(loan, 0);
+    const shocked = getLoanMonthlyPayment(loan, whatIfPrimeShockPts);
+    totalCurrent += current;
+    totalNew += shocked;
+    const delta = shocked - current;
+    return `
+      <tr>
+        <td>${escapeHtml(loan.description)}</td>
+        <td>${money(current)}</td>
+        <td>${money(shocked)}</td>
+        <td class="${delta >= 0 ? 'negative' : 'positive'}">${delta >= 0 ? "+" : "-"}${money(Math.abs(delta))}</td>
+      </tr>
+    `;
+  }).join("") + `
+    <tr>
+      <td><strong>Combined</strong></td>
+      <td><strong>${money(totalCurrent)}</strong></td>
+      <td><strong>${money(totalNew)}</strong></td>
+      <td class="${totalNew - totalCurrent >= 0 ? 'negative' : 'positive'}"><strong>${totalNew - totalCurrent >= 0 ? "+" : "-"}${money(Math.abs(totalNew - totalCurrent))}</strong></td>
+    </tr>
+  `;
 }
 
 // Projects the predicted bank balance forward month by month using only
@@ -1416,7 +1689,7 @@ function computeForecast(months) {
         const start = new Date(loan.start_date + "T00:00:00");
         const elapsed = (year - start.getFullYear()) * 12 + (month - start.getMonth());
         if (elapsed >= 0 && elapsed < Number(loan.term_months)) {
-          loanTotal += getLoanMonthlyPayment(loan);
+          loanTotal += getLoanMonthlyPayment(loan, whatIfPrimeShockPts);
         }
       }
     }
@@ -1488,7 +1761,7 @@ function computeNetWorth(months, cashRows, startBalance) {
     const monthsAhead = idx + 1;
     let loanBalanceTotal = 0;
     for (const loan of loans) {
-      const rate = getLoanCurrentRate(loan);
+      const rate = getLoanCurrentRate(loan, whatIfPrimeShockPts);
       const n = Number(loan.term_months) || 0;
       const pv = Number(loan.principal) || 0;
       const p = monthsElapsed(loan.start_date) + monthsAhead;
@@ -1504,6 +1777,7 @@ function computeNetWorth(months, cashRows, startBalance) {
 function renderForecast() {
   const months = parseInt(document.getElementById("forecast-horizon").value, 10) || 6;
   const { startBalance, rows } = computeForecast(months);
+  renderPrimeShockTable();
 
   const hasRecurring = entriesCache.income.some(e => e.is_recurring) ||
                         entriesCache.expense.some(e => e.is_recurring) ||
@@ -1764,6 +2038,293 @@ async function deleteCashflow(scenarioId, cashflowId) {
   }
 }
 
+// ---------------- Spending heatmap by day of week ----------------
+// Aggregates recurring expense occurrences over the next 3 months plus the
+// logged date of one-off expenses, bucketed by weekday, as a rough guide to
+// which days money tends to leave your account.
+function computeHeatmapData() {
+  const totals = [0, 0, 0, 0, 0, 0, 0]; // Sun..Sat
+  const today = new Date();
+  for (let offset = 0; offset < 3; offset++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    for (const e of entriesCache.expense.filter(e => e.is_recurring)) {
+      for (const occ of getOccurrencesInMonth(e, d.getFullYear(), d.getMonth())) {
+        totals[occ.getDay()] += Number(e.amount) || 0;
+      }
+    }
+  }
+  for (const e of entriesCache.expense.filter(e => !e.is_recurring)) {
+    if (!e.created_at) continue;
+    totals[new Date(e.created_at).getDay()] += Number(e.amount) || 0;
+  }
+  return totals;
+}
+
+function renderSpendingHeatmap() {
+  const totals = computeHeatmapData();
+  const max = Math.max(...totals, 0.01);
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const grid = document.getElementById("heatmap-grid");
+  grid.innerHTML = totals.map((v, i) => {
+    const intensity = v / max;
+    const bg = v === 0 ? "var(--bg)" : `rgba(244, 64, 106, ${(0.08 + intensity * 0.42).toFixed(2)})`;
+    return `<div class="heatmap-cell" style="background:${bg};"><div class="hm-day">${dayNames[i]}</div><div class="hm-amt">${v > 0 ? money(v) : "—"}</div></div>`;
+  }).join("");
+}
+
+// ---------------- Weekly digest ----------------
+function computeWeeklyDigest() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+
+  const monthsToCheck = [[start.getFullYear(), start.getMonth()]];
+  if (end.getMonth() !== start.getMonth() || end.getFullYear() !== start.getFullYear()) {
+    monthsToCheck.push([end.getFullYear(), end.getMonth()]);
+  }
+
+  let income = 0, expense = 0;
+  for (const [y, m] of monthsToCheck) {
+    for (const e of entriesCache.income.filter(e => e.is_recurring)) {
+      for (const occ of getOccurrencesInMonth(e, y, m)) {
+        if (occ >= start && occ <= end) income += Number(e.amount) || 0;
+      }
+    }
+    for (const e of entriesCache.expense.filter(e => e.is_recurring)) {
+      for (const occ of getOccurrencesInMonth(e, y, m)) {
+        if (occ >= start && occ <= end) expense += Number(e.amount) || 0;
+      }
+    }
+  }
+  return { start, end, income, expense };
+}
+
+function renderWeeklyDigest() {
+  const { start, end, income, expense } = computeWeeklyDigest();
+  const fmt = (d) => d.toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+  document.getElementById("weekly-digest-range").textContent = fmt(start) + " – " + fmt(end);
+  document.getElementById("weekly-digest-income").textContent = money(income);
+  document.getElementById("weekly-digest-expense").textContent = money(expense);
+  const net = income - expense;
+  const netEl = document.getElementById("weekly-digest-net");
+  netEl.textContent = (net >= 0 ? "+" : "-") + money(Math.abs(net));
+  netEl.classList.remove("positive", "negative");
+  netEl.classList.add(net >= 0 ? "positive" : "negative");
+}
+
+// ---------------- Savings streak ----------------
+// A simple counter: consecutive months (most recent first) where the
+// predicted bank balance ended higher than it started. A snapshot row is
+// created the first time the app is opened in a given month (start = end =
+// that day's predicted balance), then its end_balance is kept current on
+// every later visit that same month — so the streak only reflects months
+// you've actually had the app open in.
+let snapshotsCache = [];
+
+async function loadBalanceSnapshots() {
+  const { data, error } = await sb
+    .from("bb_balance_snapshots")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("year", { ascending: false })
+    .order("month", { ascending: false });
+  snapshotsCache = (!error && data) ? data : [];
+}
+
+async function syncCurrentSnapshot(predictedBank) {
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  let row = snapshotsCache.find(s => s.year === year && s.month === month);
+  if (!row) {
+    const { data, error } = await sb
+      .from("bb_balance_snapshots")
+      .insert({ user_id: currentUser.id, year, month, start_balance: predictedBank, end_balance: predictedBank })
+      .select().single();
+    if (!error && data) snapshotsCache.unshift(data);
+  } else if (Number(row.end_balance) !== predictedBank) {
+    const { error } = await sb
+      .from("bb_balance_snapshots")
+      .update({ end_balance: predictedBank, updated_at: new Date().toISOString() })
+      .eq("id", row.id);
+    if (!error) row.end_balance = predictedBank;
+  }
+}
+
+function computeStreak() {
+  let streak = 0;
+  let expectedYear = null, expectedMonth = null;
+  for (const s of snapshotsCache) {
+    if (expectedYear === null) { expectedYear = s.year; expectedMonth = s.month; }
+    if (s.year !== expectedYear || s.month !== expectedMonth) break;
+    if (Number(s.end_balance) > Number(s.start_balance)) {
+      streak++;
+      expectedMonth--;
+      if (expectedMonth < 0) { expectedMonth = 11; expectedYear--; }
+    } else break;
+  }
+  return streak;
+}
+
+function renderStreakBanner() {
+  const streak = computeStreak();
+  const el = document.getElementById("streak-banner");
+  if (streak >= 1) {
+    el.classList.remove("hidden");
+    el.textContent = "🔥 " + streak + " month" + (streak === 1 ? "" : "s") + " in a row your predicted balance ended higher than it started.";
+  } else {
+    el.classList.add("hidden");
+  }
+}
+
+// ---------------- Savings goals ----------------
+let goalsCache = [];
+let goalProgressEditingId = null;
+
+async function loadGoals() {
+  const { data, error } = await sb
+    .from("bb_goals")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+  goalsCache = (!error && data) ? data : [];
+}
+
+function goalRingSvg(pctValue) {
+  const r = 34, c = 2 * Math.PI * r;
+  const offset = c * (1 - pctValue / 100);
+  const color = pctValue >= 100 ? "var(--income)" : "var(--accent)";
+  return `
+    <svg width="88" height="88" viewBox="0 0 88 88">
+      <circle cx="44" cy="44" r="${r}" fill="none" stroke="var(--border)" stroke-width="8" />
+      <circle cx="44" cy="44" r="${r}" fill="none" stroke="${color}" stroke-width="8"
+        stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"
+        transform="rotate(-90 44 44)" />
+      <text x="44" y="49" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">${Math.round(pctValue)}%</text>
+    </svg>
+  `;
+}
+
+function renderGoals() {
+  const grid = document.getElementById("goals-grid");
+  const empty = document.getElementById("goals-empty");
+  grid.innerHTML = "";
+  if (goalsCache.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
+  for (const g of goalsCache) {
+    const progressPct = Math.max(0, Math.min(100, (Number(g.current_amount) || 0) / (Number(g.target_amount) || 1) * 100));
+    const card = document.createElement("div");
+    card.className = "goal-card";
+    card.innerHTML = `
+      ${goalRingSvg(progressPct)}
+      <div class="goal-name">${escapeHtml(g.name)}</div>
+      <div class="goal-amounts">${money(g.current_amount)} of ${money(g.target_amount)}</div>
+      ${g.target_date ? `<div class="goal-date">Target: ${new Date(g.target_date + "T00:00:00").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" })}</div>` : ""}
+      <div class="goal-actions">
+        <button class="btn-secondary" data-action="update">Update</button>
+        <button class="btn-danger" data-action="delete">Delete</button>
+      </div>
+    `;
+    card.querySelector('[data-action="update"]').addEventListener("click", () => openGoalProgressModal(g.id));
+    card.querySelector('[data-action="delete"]').addEventListener("click", () => deleteGoal(g.id));
+    grid.appendChild(card);
+  }
+}
+
+function openGoalModal() {
+  document.getElementById("goal-name-input").value = "";
+  document.getElementById("goal-target-input").value = "";
+  document.getElementById("goal-current-input").value = "";
+  document.getElementById("goal-date-input").value = "";
+  document.getElementById("goal-modal-backdrop").classList.add("show");
+}
+
+function closeGoalModal() {
+  document.getElementById("goal-modal-backdrop").classList.remove("show");
+}
+
+async function saveGoal() {
+  const name = document.getElementById("goal-name-input").value.trim();
+  const target = parseFloat(document.getElementById("goal-target-input").value);
+  const current = parseFloat(document.getElementById("goal-current-input").value) || 0;
+  const targetDate = document.getElementById("goal-date-input").value || null;
+  if (!name || isNaN(target) || target <= 0) return;
+
+  const { data, error } = await sb
+    .from("bb_goals")
+    .insert({ user_id: currentUser.id, name, target_amount: target, current_amount: current, target_date: targetDate })
+    .select().single();
+
+  if (!error && data) {
+    goalsCache.push(data);
+    closeGoalModal();
+    renderGoals();
+  } else if (error) {
+    alert("Couldn't create that goal: " + error.message);
+  }
+}
+
+function openGoalProgressModal(id) {
+  const g = goalsCache.find(g => g.id === id);
+  if (!g) return;
+  goalProgressEditingId = id;
+  document.getElementById("goal-progress-modal-sub").textContent = `${g.name} — target ${money(g.target_amount)}`;
+  document.getElementById("goal-progress-input").value = g.current_amount;
+  document.getElementById("goal-progress-modal-backdrop").classList.add("show");
+}
+
+function closeGoalProgressModal() {
+  document.getElementById("goal-progress-modal-backdrop").classList.remove("show");
+  goalProgressEditingId = null;
+}
+
+async function saveGoalProgress() {
+  const amount = parseFloat(document.getElementById("goal-progress-input").value);
+  if (isNaN(amount) || amount < 0 || !goalProgressEditingId) return;
+
+  const { error } = await sb.from("bb_goals").update({ current_amount: amount }).eq("id", goalProgressEditingId);
+  if (!error) {
+    const g = goalsCache.find(g => g.id === goalProgressEditingId);
+    if (g) g.current_amount = amount;
+    closeGoalProgressModal();
+    renderGoals();
+  } else {
+    alert("Couldn't update progress: " + error.message);
+  }
+}
+
+async function deleteGoal(id) {
+  const { error } = await sb.from("bb_goals").delete().eq("id", id);
+  if (!error) {
+    goalsCache = goalsCache.filter(g => g.id !== id);
+    renderGoals();
+  }
+}
+
+// ---------------- Custom tags ----------------
+let currentTagFilter = null;
+
+function parseTags(str) {
+  return (str || "").split(",").map(t => t.trim()).filter(Boolean);
+}
+
+function tagChipsHtml(tagsStr) {
+  const tags = parseTags(tagsStr);
+  if (tags.length === 0) return "";
+  return `<span class="entry-tags">${tags.map(t => `<span class="tag-chip">${escapeHtml(t)}</span>`).join("")}</span>`;
+}
+
+// ---------------- Receipt photo capture ----------------
+async function viewReceipt(path) {
+  const { data, error } = await sb.storage.from("receipts").createSignedUrl(path, 3600);
+  if (!error && data) window.open(data.signedUrl, "_blank");
+  else alert("Couldn't open that receipt.");
+}
+
 // ---------------- Auth ----------------
 let authMode = "login";
 
@@ -1837,6 +2398,8 @@ async function showApp() {
   await loadAccounts();
   await loadAllEntries();
   await loadExchangeRates();
+  await loadGoals();
+  await loadBalanceSnapshots();
   showDashboard();
 }
 
@@ -1915,6 +2478,10 @@ function renderDashboard() {
   document.getElementById("bubble-total-liability").textContent = money(categoryTotal("liability"));
 
   renderCalendar();
+  renderWeeklyDigest();
+  renderSpendingHeatmap();
+  renderGoals();
+  syncCurrentSnapshot(predictedBank).then(renderStreakBanner);
 }
 
 function showScreen(name) {
@@ -1942,6 +2509,10 @@ function openCategory(cat) {
 
   document.getElementById("entry-desc").value = "";
   document.getElementById("entry-amount").value = "";
+  document.getElementById("entry-tags").value = "";
+  document.getElementById("entry-receipt").value = "";
+  document.getElementById("entry-receipt-field").classList.toggle("hidden", cat !== "expense");
+  currentTagFilter = null;
   hideLoanFields();
 
   document.getElementById("entry-recurring").checked = false;
@@ -2030,9 +2601,35 @@ function hideRecurringFields() {
 function renderEntryList() {
   const list = document.getElementById("entry-list");
   const empty = document.getElementById("entry-empty");
-  const entries = entriesCache[currentCategory];
+  const allEntries = entriesCache[currentCategory];
 
   document.getElementById("detail-total-value").textContent = money(categoryTotal(currentCategory));
+
+  // Tag filter chips — built from every tag across this category's entries.
+  const filterRow = document.getElementById("tag-filter-row");
+  const allTags = [...new Set(allEntries.flatMap(e => parseTags(e.tags)))].sort();
+  if (allTags.length === 0) {
+    filterRow.classList.add("hidden");
+    filterRow.innerHTML = "";
+    currentTagFilter = null;
+  } else {
+    filterRow.classList.remove("hidden");
+    filterRow.innerHTML = ["All"].concat(allTags).map(t => {
+      const isAll = t === "All";
+      const active = (isAll && !currentTagFilter) || (!isAll && currentTagFilter === t);
+      return `<button type="button" class="tag-filter-chip${active ? " active" : ""}" data-tag="${isAll ? "" : escapeHtml(t)}">${escapeHtml(t)}</button>`;
+    }).join("");
+    filterRow.querySelectorAll(".tag-filter-chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentTagFilter = btn.dataset.tag || null;
+        renderEntryList();
+      });
+    });
+  }
+
+  const entries = currentTagFilter
+    ? allEntries.filter(e => parseTags(e.tags).includes(currentTagFilter))
+    : allEntries;
 
   list.innerHTML = "";
   if (entries.length === 0) {
@@ -2054,7 +2651,7 @@ function renderEntryList() {
 
       row.innerHTML = `
         <div class="loan-top">
-          <span class="desc">${escapeHtml(entry.description)}<span class="loan-badge">${LOAN_TYPE_LABELS[entry.loan_type] || "Loan"}</span></span>
+          <span class="desc">${escapeHtml(entry.description)}<span class="loan-badge">${LOAN_TYPE_LABELS[entry.loan_type] || "Loan"}</span>${tagChipsHtml(entry.tags)}</span>
           <span class="right">
             <span class="amt">${money(balance)}</span>
             <button class="btn-danger" data-id="${entry.id}">Delete</button>
@@ -2081,15 +2678,19 @@ function renderEntryList() {
       const recurringTag = entry.is_recurring
         ? `<span class="recurring-badge">↻ ${RECURRENCE_LABELS[entry.recurrence_frequency] || "Recurring"}</span>`
         : "";
+      const receiptBtn = entry.receipt_path ? `<button class="receipt-btn" type="button" data-receipt="${escapeHtml(entry.receipt_path)}">📎 Receipt</button>` : "";
       row.innerHTML = `
-        <span class="desc">${escapeHtml(entry.description)}${recurringTag}</span>
+        <span class="desc">${escapeHtml(entry.description)}${recurringTag}${tagChipsHtml(entry.tags)}</span>
         <span class="right">
           <span class="amt">${money(entryValue(entry))}</span>
+          ${receiptBtn}
           <button class="btn-danger" data-id="${entry.id}">Delete</button>
         </span>
       `;
     }
     row.querySelector(".btn-danger").addEventListener("click", () => deleteEntry(entry.id));
+    const receiptBtnEl = row.querySelector(".receipt-btn");
+    if (receiptBtnEl) receiptBtnEl.addEventListener("click", () => viewReceipt(receiptBtnEl.dataset.receipt));
 
     const simToggle = row.querySelector(".sim-toggle");
     if (simToggle) {
@@ -2131,8 +2732,10 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
   const amtEl = document.getElementById("entry-amount");
   const description = descEl.value.trim();
   const isLoan = currentCategory === "liability" && document.getElementById("loan-fields").classList.contains("show");
+  const tagsStr = document.getElementById("entry-tags").value.trim();
+  const tagsValue = tagsStr ? parseTags(tagsStr).join(",") : null;
 
-  let payload = { user_id: currentUser.id, category: currentCategory, description };
+  let payload = { user_id: currentUser.id, category: currentCategory, description, tags: tagsValue };
 
   if (isLoan) {
     const loanType = document.getElementById("loan-type").value;
@@ -2179,8 +2782,24 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
 
   if (!error && data) {
     entriesCache[currentCategory].unshift(data);
+
+    const receiptInput = document.getElementById("entry-receipt");
+    if (currentCategory === "expense" && !isLoan && receiptInput.files[0]) {
+      const file = receiptInput.files[0];
+      const path = `${currentUser.id}/${data.id}/${file.name}`;
+      const { error: upErr } = await sb.storage.from("receipts").upload(path, file, { upsert: true });
+      if (!upErr) {
+        const { error: updErr } = await sb.from("bb_entries").update({ receipt_path: path }).eq("id", data.id);
+        if (!updErr) data.receipt_path = path;
+      } else {
+        alert("Entry saved, but the receipt photo couldn't be uploaded: " + upErr.message);
+      }
+    }
+
     descEl.value = "";
     amtEl.value = "";
+    document.getElementById("entry-tags").value = "";
+    receiptInput.value = "";
     document.getElementById("loan-principal").value = "";
     document.getElementById("loan-term").value = "";
     document.getElementById("loan-start-date").value = "";

@@ -36,7 +36,13 @@ create table if not exists bb_entries (
   -- Recurring payment columns (only used for category = 'income' or 'expense')
   is_recurring boolean not null default false,
   recurrence_frequency text check (recurrence_frequency in ('weekly', 'biweekly', 'monthly', 'annual')),
-  recurrence_next_date date       -- the next (or first) date this income/expense is due/received; future occurrences are worked out from this anchor date + frequency
+  recurrence_next_date date,      -- the next (or first) date this income/expense is due/received; future occurrences are worked out from this anchor date + frequency
+
+  -- Custom tags: comma-separated free text, e.g. "groceries,essential"
+  tags text,
+
+  -- Receipt photo: storage path in the 'receipts' bucket (expenses only), e.g. "<user_id>/<entry_id>/photo.jpg"
+  receipt_path text
 );
 
 -- If you're re-running this against a database created before loan
@@ -52,6 +58,8 @@ alter table bb_entries add column if not exists start_date date;
 alter table bb_entries add column if not exists is_recurring boolean not null default false;
 alter table bb_entries add column if not exists recurrence_frequency text;
 alter table bb_entries add column if not exists recurrence_next_date date;
+alter table bb_entries add column if not exists tags text;
+alter table bb_entries add column if not exists receipt_path text;
 
 create index if not exists bb_entries_user_category_idx
   on bb_entries (user_id, category);
@@ -101,6 +109,84 @@ insert into bb_prime_rate (id, rate, source)
 values (1, 0.105, 'Seeded manually — South African prime rate, August 2026')
 on conflict (id) do nothing;
 
+-- Scenarios: NPV/IRR cash-flow scenario comparison (Scenarios menu tab).
+-- A scenario is a named set of cash flows at a discount rate — general
+-- purpose, so it works for comparing loan offers, investments, or any
+-- decision with cash flows over time (same approach as the Loan Decision
+-- Toolkit workbook). Period 0 is normally the initial outlay/investment
+-- (usually negative); periods 1+ are the cash flows that follow.
+create table if not exists bb_scenarios (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  discount_rate numeric(6,4) not null default 0.10,  -- annual/period discount rate as a fraction, e.g. 0.115 = 11.5%
+  created_at timestamptz not null default now()
+);
+
+create table if not exists bb_scenario_cashflows (
+  id uuid primary key default gen_random_uuid(),
+  scenario_id uuid not null references bb_scenarios(id) on delete cascade,
+  period integer not null,      -- 0 = initial outlay, 1, 2, 3... = subsequent periods
+  amount numeric(14,2) not null,-- negative for cash out, positive for cash in
+  created_at timestamptz not null default now()
+);
+
+create index if not exists bb_scenarios_user_idx on bb_scenarios (user_id);
+create index if not exists bb_scenario_cashflows_scenario_idx on bb_scenario_cashflows (scenario_id);
+
+-- Goals: savings goals with progress rings on the Dashboard. current_amount
+-- is updated manually by the user (via the "Update" button on each goal
+-- card) — it isn't tied to any account automatically, since one goal is
+-- often only part of a broader savings balance.
+create table if not exists bb_goals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  target_amount numeric(14,2) not null check (target_amount > 0),
+  current_amount numeric(14,2) not null default 0,
+  target_date date,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists bb_goals_user_idx on bb_goals (user_id);
+
+-- Balance snapshots: powers the Savings Streak counter. One row per
+-- user/month — start_balance is set the first time the app is opened that
+-- month, end_balance is kept current on every later visit within the same
+-- month. A streak counts back from the current month while each month's
+-- end_balance is higher than its start_balance.
+create table if not exists bb_balance_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  year integer not null,
+  month integer not null check (month between 0 and 11),
+  start_balance numeric(14,2) not null,
+  end_balance numeric(14,2) not null,
+  updated_at timestamptz not null default now(),
+  unique (user_id, year, month)
+);
+
+create index if not exists bb_balance_snapshots_user_idx on bb_balance_snapshots (user_id);
+
+-- ============================================================
+-- Receipt photo storage (Receipt Photo Capture feature)
+-- Private bucket — files are only readable via short-lived signed URLs
+-- generated for the owning user, never public.
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('receipts', 'receipts', false)
+on conflict (id) do nothing;
+
+drop policy if exists "receipts: users can upload own" on storage.objects;
+create policy "receipts: users can upload own" on storage.objects
+  for insert with check (bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "receipts: users can view own" on storage.objects;
+create policy "receipts: users can view own" on storage.objects
+  for select using (bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "receipts: users can delete own" on storage.objects;
+create policy "receipts: users can delete own" on storage.objects
+  for delete using (bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text);
+
 -- ============================================================
 -- Row Level Security: every user can only ever see/change their own rows
 -- ============================================================
@@ -108,6 +194,10 @@ alter table bb_entries enable row level security;
 alter table bb_settings enable row level security;
 alter table bb_prime_rate enable row level security;
 alter table bb_accounts enable row level security;
+alter table bb_scenarios enable row level security;
+alter table bb_scenario_cashflows enable row level security;
+alter table bb_goals enable row level security;
+alter table bb_balance_snapshots enable row level security;
 
 -- drop-then-create makes this whole file safe to run more than once
 -- (Postgres doesn't support "create policy if not exists")
@@ -158,3 +248,57 @@ create policy "bb_accounts: update own" on bb_accounts
 drop policy if exists "bb_accounts: delete own" on bb_accounts;
 create policy "bb_accounts: delete own" on bb_accounts
   for delete using (auth.uid() = user_id);
+
+drop policy if exists "bb_scenarios: select own" on bb_scenarios;
+create policy "bb_scenarios: select own" on bb_scenarios
+  for select using (auth.uid() = user_id);
+drop policy if exists "bb_scenarios: insert own" on bb_scenarios;
+create policy "bb_scenarios: insert own" on bb_scenarios
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "bb_scenarios: update own" on bb_scenarios;
+create policy "bb_scenarios: update own" on bb_scenarios
+  for update using (auth.uid() = user_id);
+drop policy if exists "bb_scenarios: delete own" on bb_scenarios;
+create policy "bb_scenarios: delete own" on bb_scenarios
+  for delete using (auth.uid() = user_id);
+
+-- bb_scenario_cashflows has no user_id column of its own, so its policies
+-- check ownership via the parent scenario row instead.
+drop policy if exists "bb_scenario_cashflows: select own" on bb_scenario_cashflows;
+create policy "bb_scenario_cashflows: select own" on bb_scenario_cashflows
+  for select using (exists (
+    select 1 from bb_scenarios s where s.id = scenario_id and s.user_id = auth.uid()
+  ));
+drop policy if exists "bb_scenario_cashflows: insert own" on bb_scenario_cashflows;
+create policy "bb_scenario_cashflows: insert own" on bb_scenario_cashflows
+  for insert with check (exists (
+    select 1 from bb_scenarios s where s.id = scenario_id and s.user_id = auth.uid()
+  ));
+drop policy if exists "bb_scenario_cashflows: delete own" on bb_scenario_cashflows;
+create policy "bb_scenario_cashflows: delete own" on bb_scenario_cashflows
+  for delete using (exists (
+    select 1 from bb_scenarios s where s.id = scenario_id and s.user_id = auth.uid()
+  ));
+
+drop policy if exists "bb_goals: select own" on bb_goals;
+create policy "bb_goals: select own" on bb_goals
+  for select using (auth.uid() = user_id);
+drop policy if exists "bb_goals: insert own" on bb_goals;
+create policy "bb_goals: insert own" on bb_goals
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "bb_goals: update own" on bb_goals;
+create policy "bb_goals: update own" on bb_goals
+  for update using (auth.uid() = user_id);
+drop policy if exists "bb_goals: delete own" on bb_goals;
+create policy "bb_goals: delete own" on bb_goals
+  for delete using (auth.uid() = user_id);
+
+drop policy if exists "bb_balance_snapshots: select own" on bb_balance_snapshots;
+create policy "bb_balance_snapshots: select own" on bb_balance_snapshots
+  for select using (auth.uid() = user_id);
+drop policy if exists "bb_balance_snapshots: insert own" on bb_balance_snapshots;
+create policy "bb_balance_snapshots: insert own" on bb_balance_snapshots
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "bb_balance_snapshots: update own" on bb_balance_snapshots;
+create policy "bb_balance_snapshots: update own" on bb_balance_snapshots
+  for update using (auth.uid() = user_id);
