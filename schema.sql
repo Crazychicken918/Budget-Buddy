@@ -42,7 +42,12 @@ create table if not exists bb_entries (
   tags text,
 
   -- Receipt photo: storage path in the 'receipts' bucket (expenses only), e.g. "<user_id>/<entry_id>/photo.jpg"
-  receipt_path text
+  receipt_path text,
+
+  -- Tax set-aside (income only): percentage of this untaxed (freelance/
+  -- business) income entry to hold back from the predicted balance and
+  -- forecast. General calculator only — not tax advice.
+  tax_set_aside_pct numeric(5,2) check (tax_set_aside_pct is null or (tax_set_aside_pct >= 0 and tax_set_aside_pct <= 100))
 );
 
 -- If you're re-running this against a database created before loan
@@ -60,6 +65,7 @@ alter table bb_entries add column if not exists recurrence_frequency text;
 alter table bb_entries add column if not exists recurrence_next_date date;
 alter table bb_entries add column if not exists tags text;
 alter table bb_entries add column if not exists receipt_path text;
+alter table bb_entries add column if not exists tax_set_aside_pct numeric(5,2);
 
 create index if not exists bb_entries_user_category_idx
   on bb_entries (user_id, category);
@@ -168,6 +174,20 @@ create table if not exists bb_balance_snapshots (
 
 create index if not exists bb_balance_snapshots_user_idx on bb_balance_snapshots (user_id);
 
+-- Budgets: a monthly spending limit per tag, compared live against actual
+-- tagged expenses for the current calendar month (Budget vs Actual on the
+-- Dashboard) — "actual" is computed in the app, not stored here.
+create table if not exists bb_budgets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  tag text not null,
+  monthly_amount numeric(14,2) not null check (monthly_amount > 0),
+  created_at timestamptz not null default now(),
+  unique (user_id, tag)
+);
+
+create index if not exists bb_budgets_user_idx on bb_budgets (user_id);
+
 -- ============================================================
 -- Receipt photo storage (Receipt Photo Capture feature)
 -- Private bucket — files are only readable via short-lived signed URLs
@@ -198,6 +218,7 @@ alter table bb_scenarios enable row level security;
 alter table bb_scenario_cashflows enable row level security;
 alter table bb_goals enable row level security;
 alter table bb_balance_snapshots enable row level security;
+alter table bb_budgets enable row level security;
 
 -- drop-then-create makes this whole file safe to run more than once
 -- (Postgres doesn't support "create policy if not exists")
@@ -302,3 +323,13 @@ create policy "bb_balance_snapshots: insert own" on bb_balance_snapshots
 drop policy if exists "bb_balance_snapshots: update own" on bb_balance_snapshots;
 create policy "bb_balance_snapshots: update own" on bb_balance_snapshots
   for update using (auth.uid() = user_id);
+
+drop policy if exists "bb_budgets: select own" on bb_budgets;
+create policy "bb_budgets: select own" on bb_budgets
+  for select using (auth.uid() = user_id);
+drop policy if exists "bb_budgets: insert own" on bb_budgets;
+create policy "bb_budgets: insert own" on bb_budgets
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "bb_budgets: delete own" on bb_budgets;
+create policy "bb_budgets: delete own" on bb_budgets
+  for delete using (auth.uid() = user_id);

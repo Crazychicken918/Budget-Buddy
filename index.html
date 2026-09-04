@@ -447,6 +447,41 @@
   }
   .cal-pill.cal-in { background: var(--income-bg); color: var(--income); }
   .cal-pill.cal-out { background: var(--expense-bg); color: var(--expense); }
+  .cal-pill.cal-tax { background: var(--liability-bg); color: var(--liability); }
+  .calendar-legend .dot.tax { background: var(--liability); }
+
+  /* ---------- Tax set-aside ---------- */
+  .tax-toggle { display: none; align-items: center; }
+  .tax-toggle.show { display: flex; }
+  .tax-toggle label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 0; color: var(--text); font-size: 13.5px; }
+  .tax-toggle input[type="checkbox"] { width: auto; }
+  .tax-fields { display: none; width: 100%; flex-wrap: wrap; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 4px; }
+  .tax-fields.show { display: flex; }
+  .tax-fields .field { flex: 1; min-width: 140px; margin-bottom: 0; }
+  .tax-disclaimer { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+  .tax-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--liability);
+    background: var(--liability-bg);
+    border-radius: 6px;
+    padding: 2px 7px;
+    margin-left: 8px;
+  }
+  .tax-reserve-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--liability-bg);
+    color: var(--liability);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .app-footer .tax-footer-note { color: var(--muted); font-size: 11px; }
 
   /* ---------- Forecast ---------- */
   .forecast-intro { margin-bottom: 20px; }
@@ -629,6 +664,25 @@
   .receipt-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent-dim); padding: 4px 9px; font-size: 11.5px; margin-right: 8px; }
   .receipt-btn:hover { background: var(--accent-dim); }
 
+  /* ---------- Budget vs Actual ---------- */
+  .budgets-section { margin-top: 30px; }
+  .budgets-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .budgets-header h3 { margin: 0; font-size: 17px; }
+  .budgets-list { display: flex; flex-direction: column; gap: 12px; }
+  .budget-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 18px;
+  }
+  .budget-row-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .budget-tag { font-weight: 700; font-size: 13.5px; }
+  .budget-figures { font-size: 12.5px; color: var(--muted); }
+  .budget-bar-track { background: var(--bg); border-radius: 20px; height: 8px; overflow: hidden; }
+  .budget-bar-fill { height: 100%; border-radius: 20px; transition: width .2s ease; }
+  .budget-over-note { font-size: 11.5px; color: var(--expense); font-weight: 600; margin-top: 6px; }
+
   /* ---------- Prime rate shock ---------- */
   .primeshock-card {
     background: var(--card);
@@ -798,6 +852,7 @@
       </div>
 
       <div class="streak-banner hidden" id="streak-banner"></div>
+      <div class="tax-reserve-banner hidden" id="tax-reserve-banner"></div>
 
       <div class="bubble-grid">
         <div class="bubble income" onclick="openCategory('income')">
@@ -856,6 +911,16 @@
         <div class="empty-state hidden" id="goals-empty">No goals yet — add one above to start tracking progress.</div>
       </div>
 
+      <div class="budgets-section">
+        <div class="budgets-header">
+          <h3>Budget vs Actual</h3>
+          <button class="btn-primary" onclick="openBudgetModal()">+ New Budget</button>
+        </div>
+        <p class="heatmap-sub">Set a monthly limit for a tag, and see what you've actually spent against it so far this month — recurring expenses count each time they're due, one-off expenses count if logged this month.</p>
+        <div class="budgets-list" id="budgets-list"></div>
+        <div class="empty-state hidden" id="budgets-empty">No budgets yet — tag some expenses (e.g. "groceries"), then set a monthly limit for that tag above.</div>
+      </div>
+
       <div class="calendar-section">
         <div class="calendar-header">
           <button class="btn-icon" onclick="calendarPrevMonth()" title="Previous month">‹</button>
@@ -865,6 +930,7 @@
         <div class="calendar-legend">
           <span><span class="dot in"></span> Money coming in</span>
           <span><span class="dot out"></span> Money going out</span>
+          <span class="hidden" id="calendar-legend-tax"><span class="dot tax"></span> Provisional tax deadline</span>
         </div>
         <div class="calendar-grid" id="calendar-grid"></div>
         <div class="empty-state hidden" id="calendar-empty">No recurring payments yet — mark an income or expense entry as "recurring" to see it on this calendar.</div>
@@ -910,6 +976,20 @@
         <button type="submit" class="btn-primary">Add</button>
 
         <!-- Shown for Income / Expenses only -->
+        <div class="tax-toggle" id="tax-toggle-wrap">
+          <label for="entry-tax-untaxed">
+            <input type="checkbox" id="entry-tax-untaxed" onchange="onTaxToggleChange()">
+            Untaxed income (freelance/business) — set aside for tax
+          </label>
+        </div>
+        <div class="tax-fields" id="tax-fields">
+          <div class="field">
+            <label for="tax-pct-input">% to set aside</label>
+            <input type="number" id="tax-pct-input" min="0" max="100" step="0.5" placeholder="e.g. 25">
+          </div>
+          <div class="tax-disclaimer">This is a general calculator, not tax advice — Budget Buddy isn't a registered tax practitioner. Confirm your actual obligations with SARS or an accountant.</div>
+        </div>
+
         <div class="recurring-toggle" id="recurring-toggle-wrap">
           <label for="entry-recurring">
             <input type="checkbox" id="entry-recurring" onchange="onRecurringToggleChange()">
@@ -1039,6 +1119,7 @@
             <tr>
               <th>Month</th>
               <th>Income</th>
+              <th>Tax Set Aside</th>
               <th>Expenses</th>
               <th>Loan Repayments</th>
               <th>Net</th>
@@ -1084,6 +1165,8 @@
     <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
     <span>·</span>
     <span>Budget Buddy</span>
+    <span>·</span>
+    <span class="tax-footer-note">Tax figures shown in this app are general estimates, not advice — Budget Buddy isn't a registered tax practitioner.</span>
   </footer>
 </div>
 
@@ -1168,6 +1251,26 @@
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeGoalProgressModal()">Cancel</button>
       <button class="btn-primary" onclick="saveGoalProgress()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= New budget modal ================= -->
+<div class="modal-backdrop" id="budget-modal-backdrop">
+  <div class="modal">
+    <h3>New Budget</h3>
+    <div class="modal-sub">Set a monthly spending limit for a tag. Tag your expenses first (e.g. "groceries") so there's something to compare against.</div>
+    <div class="field">
+      <label for="budget-tag-input">Tag</label>
+      <input type="text" id="budget-tag-input" placeholder="e.g. groceries">
+    </div>
+    <div class="field">
+      <label for="budget-amount-input">Monthly limit (R)</label>
+      <input type="number" id="budget-amount-input" step="0.01" placeholder="e.g. 3000">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeBudgetModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveBudget()">Create</button>
     </div>
   </div>
 </div>
@@ -1281,6 +1384,7 @@ function onCurrencyChange() {
 function refreshCurrencyViews() {
   renderDashboard();
   renderGoals();
+  renderBudgets();
   if (currentCategory) renderEntryList();
   if (document.getElementById("forecast-screen").style.display !== "none") renderForecast();
   if (document.getElementById("scenarios-screen").style.display !== "none") renderScenarios();
@@ -1447,6 +1551,15 @@ function simulateExtraPayment(entry, extraAmount) {
   };
 }
 
+// Net amount actually available once tax is set aside — used for the
+// predicted balance and forecast, never for the Income bubble total (which
+// stays gross, i.e. what was actually earned).
+function incomeNetAmount(entry) {
+  const gross = Number(entry.amount) || 0;
+  const pct = Number(entry.tax_set_aside_pct) || 0;
+  return gross * (1 - pct / 100);
+}
+
 function entryValue(entry) {
   if (entry.category === "liability" && entry.is_loan) return getLoanComputedBalance(entry);
   return Number(entry.amount) || 0;
@@ -1510,7 +1623,21 @@ function renderCalendar() {
 
   const recurringEntries = [...entriesCache.income, ...entriesCache.expense].filter(e => e.is_recurring);
 
+  // Provisional tax (IRP6) deadlines — only shown once at least one income
+  // entry has a tax set-aside, since these dates only matter to
+  // provisional taxpayers (freelance/business income), not salaried PAYE.
+  const hasUntaxedIncome = entriesCache.income.some(e => (Number(e.tax_set_aside_pct) || 0) > 0);
+  document.getElementById("calendar-legend-tax").classList.toggle("hidden", !hasUntaxedIncome);
+
   const eventsByDay = {};
+  if (hasUntaxedIncome) {
+    if (month === 7) { // August — 1st provisional payment (IRP6), due 31 August
+      eventsByDay[31] = (eventsByDay[31] || []).concat([{ isTaxDeadline: true, desc: "Provisional tax (IRP6) — 1st payment due" }]);
+    } else if (month === 1) { // February — 2nd provisional payment (IRP6), due last day of Feb
+      const lastDay = new Date(year, 2, 0).getDate();
+      eventsByDay[lastDay] = (eventsByDay[lastDay] || []).concat([{ isTaxDeadline: true, desc: "Provisional tax (IRP6) — 2nd payment due" }]);
+    }
+  }
   for (const entry of recurringEntries) {
     for (const d of getOccurrencesInMonth(entry, year, month)) {
       const day = d.getDate();
@@ -1551,8 +1678,13 @@ function renderCalendar() {
 
     for (const ev of (eventsByDay[day] || [])) {
       const pill = document.createElement("div");
-      pill.className = "cal-pill " + (ev.category === "income" ? "cal-in" : "cal-out");
-      pill.textContent = (ev.category === "income" ? "+" : "−") + money(ev.amount);
+      if (ev.isTaxDeadline) {
+        pill.className = "cal-pill cal-tax";
+        pill.textContent = "⚠ Tax due";
+      } else {
+        pill.className = "cal-pill " + (ev.category === "income" ? "cal-in" : "cal-out");
+        pill.textContent = (ev.category === "income" ? "+" : "−") + money(ev.amount);
+      }
       pill.title = ev.desc;
       cell.appendChild(pill);
     }
@@ -1649,7 +1781,8 @@ function renderPrimeShockTable() {
 // reuses the same occurrence logic as the payments calendar. The what-if
 // sliders scale the recurring totals only within this projection.
 function computeForecast(months) {
-  const startBalance = accountsTotal("bank") + (categoryTotal("income") - categoryTotal("expense"));
+  const totalIncomeNet = entriesCache.income.reduce((sum, e) => sum + incomeNetAmount(e), 0);
+  const startBalance = accountsTotal("bank") + (totalIncomeNet - categoryTotal("expense"));
   const recurringIncome = entriesCache.income.filter(e => e.is_recurring);
   const recurringExpense = entriesCache.expense.filter(e => e.is_recurring);
   const loans = entriesCache.liability.filter(e => e.is_loan && e.start_date && e.term_months);
@@ -1666,9 +1799,12 @@ function computeForecast(months) {
     const month = d.getMonth();
 
     let incomeTotal = 0;
+    let taxReserveTotal = 0;
     for (const e of recurringIncome) {
       const occ = getOccurrencesInMonth(e, year, month);
-      incomeTotal += occ.length * (Number(e.amount) || 0) * incomeFactor;
+      const gross = occ.length * (Number(e.amount) || 0) * incomeFactor;
+      incomeTotal += gross;
+      taxReserveTotal += gross * ((Number(e.tax_set_aside_pct) || 0) / 100);
     }
 
     let expenseTotal = 0;
@@ -1694,9 +1830,9 @@ function computeForecast(months) {
       }
     }
 
-    const net = incomeTotal - expenseTotal - loanTotal;
+    const net = incomeTotal - taxReserveTotal - expenseTotal - loanTotal;
     balance += net;
-    rows.push({ year, month, incomeTotal, expenseTotal, loanTotal, net, balance });
+    rows.push({ year, month, incomeTotal, taxReserveTotal, expenseTotal, loanTotal, net, balance });
   }
 
   return { startBalance, rows };
@@ -1817,6 +1953,7 @@ function renderForecast() {
     <tr>
       <td>${monthNames[r.month]} ${r.year}</td>
       <td class="positive">${r.incomeTotal > 0 ? "+" + money(r.incomeTotal) : money(0)}</td>
+      <td class="negative">${r.taxReserveTotal > 0 ? "-" + money(r.taxReserveTotal) : money(0)}</td>
       <td class="negative">${r.expenseTotal > 0 ? "-" + money(r.expenseTotal) : money(0)}</td>
       <td class="negative">${r.loanTotal > 0 ? "-" + money(r.loanTotal) : money(0)}</td>
       <td class="${r.net >= 0 ? 'positive' : 'negative'}">${r.net >= 0 ? "+" : "-"}${money(Math.abs(r.net))}</td>
@@ -2305,6 +2442,113 @@ async function deleteGoal(id) {
   }
 }
 
+// ---------------- Budget vs Actual ----------------
+// "Actual" is computed live, not stored: for the current calendar month, a
+// recurring expense counts once per occurrence due this month (reusing the
+// same getOccurrencesInMonth logic as the calendar/forecast), and a one-off
+// expense counts if it was logged (created_at) this month.
+let budgetsCache = [];
+
+async function loadBudgets() {
+  const { data, error } = await sb
+    .from("bb_budgets")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+  budgetsCache = (!error && data) ? data : [];
+}
+
+function computeBudgetActual(tag) {
+  const today = new Date();
+  const year = today.getFullYear(), month = today.getMonth();
+  let total = 0;
+  for (const e of entriesCache.expense) {
+    if (!parseTags(e.tags).includes(tag)) continue;
+    if (e.is_recurring) {
+      total += getOccurrencesInMonth(e, year, month).length * (Number(e.amount) || 0);
+    } else if (e.created_at) {
+      const d = new Date(e.created_at);
+      if (d.getFullYear() === year && d.getMonth() === month) total += Number(e.amount) || 0;
+    }
+  }
+  return total;
+}
+
+function renderBudgets() {
+  const list = document.getElementById("budgets-list");
+  const empty = document.getElementById("budgets-empty");
+  list.innerHTML = "";
+  if (budgetsCache.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
+  for (const b of budgetsCache) {
+    const actual = computeBudgetActual(b.tag);
+    const limit = Number(b.monthly_amount) || 0;
+    const pctUsed = Math.min(100, (actual / (limit || 1)) * 100);
+    const over = actual > limit;
+    const barColor = over ? "var(--expense)" : (pctUsed > 80 ? "var(--liability)" : "var(--income)");
+
+    const row = document.createElement("div");
+    row.className = "budget-row";
+    row.innerHTML = `
+      <div class="budget-row-top">
+        <span class="budget-tag">${escapeHtml(b.tag)}</span>
+        <span class="budget-figures ${over ? 'negative' : ''}">${money(actual)} of ${money(limit)}</span>
+        <button class="btn-icon" title="Delete budget">✕</button>
+      </div>
+      <div class="budget-bar-track"><div class="budget-bar-fill" style="width:${pctUsed}%;background:${barColor};"></div></div>
+      ${over ? `<div class="budget-over-note">Over by ${money(actual - limit)} this month</div>` : ""}
+    `;
+    row.querySelector(".btn-icon").addEventListener("click", () => deleteBudget(b.id));
+    list.appendChild(row);
+  }
+}
+
+function openBudgetModal() {
+  document.getElementById("budget-tag-input").value = "";
+  document.getElementById("budget-amount-input").value = "";
+  document.getElementById("budget-modal-backdrop").classList.add("show");
+}
+
+function closeBudgetModal() {
+  document.getElementById("budget-modal-backdrop").classList.remove("show");
+}
+
+async function saveBudget() {
+  const tag = document.getElementById("budget-tag-input").value.trim();
+  const amount = parseFloat(document.getElementById("budget-amount-input").value);
+  if (!tag || isNaN(amount) || amount <= 0) return;
+
+  if (budgetsCache.some(b => b.tag.toLowerCase() === tag.toLowerCase())) {
+    alert("You already have a budget for that tag — delete it first if you want to change the limit.");
+    return;
+  }
+
+  const { data, error } = await sb
+    .from("bb_budgets")
+    .insert({ user_id: currentUser.id, tag, monthly_amount: amount })
+    .select().single();
+
+  if (!error && data) {
+    budgetsCache.push(data);
+    closeBudgetModal();
+    renderBudgets();
+  } else if (error) {
+    alert("Couldn't create that budget: " + error.message);
+  }
+}
+
+async function deleteBudget(id) {
+  const { error } = await sb.from("bb_budgets").delete().eq("id", id);
+  if (!error) {
+    budgetsCache = budgetsCache.filter(b => b.id !== id);
+    renderBudgets();
+  }
+}
+
 // ---------------- Custom tags ----------------
 let currentTagFilter = null;
 
@@ -2400,6 +2644,7 @@ async function showApp() {
   await loadExchangeRates();
   await loadGoals();
   await loadBalanceSnapshots();
+  await loadBudgets();
   showDashboard();
 }
 
@@ -2453,10 +2698,20 @@ function categoryTotal(cat) {
 // ---------------- Dashboard rendering ----------------
 function renderDashboard() {
   const totalIncome = categoryTotal("income");
+  const totalIncomeNet = entriesCache.income.reduce((sum, e) => sum + incomeNetAmount(e), 0);
+  const taxReserveTotal = totalIncome - totalIncomeNet;
   const totalExpense = categoryTotal("expense");
-  const diff = totalIncome - totalExpense;
+  const diff = totalIncomeNet - totalExpense;
   const predictedBank = accountsTotal("bank") + diff;
   const totalSavings = accountsTotal("savings");
+
+  const taxBanner = document.getElementById("tax-reserve-banner");
+  if (taxReserveTotal > 0.01) {
+    taxBanner.classList.remove("hidden");
+    taxBanner.textContent = "🏛 " + money(taxReserveTotal) + " set aside for tax from untaxed income — not counted in your predicted balance. Not tax advice.";
+  } else {
+    taxBanner.classList.add("hidden");
+  }
 
   document.getElementById("summary-bank").textContent = money(predictedBank);
   document.getElementById("summary-bank-sub").textContent =
@@ -2481,6 +2736,7 @@ function renderDashboard() {
   renderWeeklyDigest();
   renderSpendingHeatmap();
   renderGoals();
+  renderBudgets();
   syncCurrentSnapshot(predictedBank).then(renderStreakBanner);
 }
 
@@ -2519,6 +2775,12 @@ function openCategory(cat) {
   document.getElementById("recurring-next-date").value = "";
   document.getElementById("recurring-frequency").value = "monthly";
   hideRecurringFields();
+
+  document.getElementById("entry-tax-untaxed").checked = false;
+  document.getElementById("tax-pct-input").value = "";
+  hideTaxFields();
+  document.getElementById("tax-toggle-wrap").classList.toggle("show", cat === "income");
+
   const recurringWrap = document.getElementById("recurring-toggle-wrap");
   if (cat === "income" || cat === "expense") {
     recurringWrap.classList.add("show");
@@ -2596,6 +2858,19 @@ function showRecurringFields() {
 
 function hideRecurringFields() {
   document.getElementById("recurring-fields").classList.remove("show");
+}
+
+function onTaxToggleChange() {
+  if (document.getElementById("entry-tax-untaxed").checked) showTaxFields();
+  else hideTaxFields();
+}
+
+function showTaxFields() {
+  document.getElementById("tax-fields").classList.add("show");
+}
+
+function hideTaxFields() {
+  document.getElementById("tax-fields").classList.remove("show");
 }
 
 function renderEntryList() {
@@ -2678,9 +2953,12 @@ function renderEntryList() {
       const recurringTag = entry.is_recurring
         ? `<span class="recurring-badge">↻ ${RECURRENCE_LABELS[entry.recurrence_frequency] || "Recurring"}</span>`
         : "";
+      const taxTag = (Number(entry.tax_set_aside_pct) || 0) > 0
+        ? `<span class="tax-badge">🏛 ${Number(entry.tax_set_aside_pct)}% set aside</span>`
+        : "";
       const receiptBtn = entry.receipt_path ? `<button class="receipt-btn" type="button" data-receipt="${escapeHtml(entry.receipt_path)}">📎 Receipt</button>` : "";
       row.innerHTML = `
-        <span class="desc">${escapeHtml(entry.description)}${recurringTag}${tagChipsHtml(entry.tags)}</span>
+        <span class="desc">${escapeHtml(entry.description)}${recurringTag}${taxTag}${tagChipsHtml(entry.tags)}</span>
         <span class="right">
           <span class="amt">${money(entryValue(entry))}</span>
           ${receiptBtn}
@@ -2776,6 +3054,12 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
       payload.recurrence_frequency = frequency;
       payload.recurrence_next_date = nextDate;
     }
+
+    if (currentCategory === "income" && document.getElementById("entry-tax-untaxed").checked) {
+      const taxPct = parseFloat(document.getElementById("tax-pct-input").value);
+      if (isNaN(taxPct) || taxPct < 0 || taxPct > 100) { alert("Please enter a tax set-aside percentage between 0 and 100."); return; }
+      payload.tax_set_aside_pct = taxPct;
+    }
   }
 
   const { data, error } = await sb.from("bb_entries").insert(payload).select().single();
@@ -2810,6 +3094,9 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
     document.getElementById("recurring-next-date").value = "";
     document.getElementById("recurring-frequency").value = "monthly";
     hideRecurringFields();
+    document.getElementById("entry-tax-untaxed").checked = false;
+    document.getElementById("tax-pct-input").value = "";
+    hideTaxFields();
     renderEntryList();
     renderCalendar();
     descEl.focus();
