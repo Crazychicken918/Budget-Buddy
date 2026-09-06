@@ -83,24 +83,47 @@
   .hidden { display: none !important; }
 
   /* ---------- Auth screen ---------- */
-  #auth-screen {
+  .auth-page {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(600px circle at 12% 15%, rgba(124,92,255,0.14), transparent 60%),
+      radial-gradient(600px circle at 88% 85%, rgba(15,185,129,0.12), transparent 60%),
+      var(--bg);
+  }
+  .auth-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--income));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 18px auto;
+    box-shadow: 0 6px 20px rgba(124,92,255,0.28);
   }
   .auth-box {
     width: 100%;
     max-width: 380px;
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 32px 28px;
+    border-top: 3px solid var(--accent);
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(30,20,60,0.05), 0 16px 40px rgba(30,20,60,0.08);
+    padding: 34px 28px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
   }
-  .auth-box h1 { font-size: 22px; margin: 0 0 4px 0; }
-  .auth-box .tagline { color: var(--muted); font-size: 13.5px; margin-bottom: 24px; }
+  .auth-box h1 { font-size: 23px; margin: 0 0 6px 0; }
+  .auth-box .tagline { color: var(--muted); font-size: 13.5px; margin-bottom: 26px; line-height: 1.5; }
+  .auth-box form { text-align: left; }
   .auth-tabs {
     display: flex;
     gap: 6px;
@@ -122,6 +145,36 @@
   .auth-tab.active { background: var(--accent); color: #fff; }
   #auth-error { color: var(--expense); font-size: 13px; margin-top: 10px; display: none; }
   #auth-msg { color: var(--income); font-size: 13px; margin-top: 10px; display: none; }
+  #reset-error { color: var(--expense); font-size: 13px; margin-top: 10px; display: none; }
+  #reset-msg { color: var(--income); font-size: 13px; margin-top: 10px; display: none; }
+  #forgot-msg { color: var(--income); font-size: 12.5px; margin-top: 10px; display: none; }
+  #forgot-error { color: var(--expense); font-size: 12.5px; margin-top: 10px; display: none; }
+
+  .password-field-wrap { position: relative; }
+  .password-field-wrap input { padding-right: 42px; }
+  .password-toggle-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    color: var(--muted);
+    padding: 6px 8px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+  .password-toggle-btn:hover { color: var(--text); background: var(--card-hover); }
+
+  .remember-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .remember-row label { display: flex; align-items: center; gap: 7px; cursor: pointer; margin-bottom: 0; color: var(--text); font-size: 13px; }
+  .remember-row input[type="checkbox"] { width: auto; }
+  .remember-row a { font-size: 12.5px; color: var(--accent); text-decoration: none; font-weight: 600; }
+  .remember-row a:hover { text-decoration: underline; }
 
   /* ---------- App shell ---------- */
   #app-screen { display: none; }
@@ -776,10 +829,11 @@
 <body>
 
 <!-- ================= AUTH SCREEN ================= -->
-<div id="auth-screen">
+<div id="auth-screen" class="auth-page">
   <div class="auth-box">
-    <h1>Budget Buddy</h1>
-    <div class="tagline">Track income, expenses, assets &amp; liabilities in one place.</div>
+    <div class="auth-icon">💰</div>
+    <h1>Welcome to Budget Buddy</h1>
+    <div class="tagline" id="auth-tagline">Good to see you — let's get your money organised.</div>
 
     <div class="auth-tabs">
       <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Log In</div>
@@ -793,12 +847,68 @@
       </div>
       <div class="field">
         <label for="auth-password">Password</label>
-        <input type="password" id="auth-password" required autocomplete="current-password" placeholder="At least 8 characters" minlength="8">
+        <div class="password-field-wrap">
+          <input type="password" id="auth-password" required autocomplete="current-password" placeholder="At least 8 characters" minlength="8">
+          <button type="button" class="password-toggle-btn" data-target="auth-password" onclick="togglePasswordVisibility(this)" title="Show password" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="remember-row">
+        <label for="auth-remember">
+          <input type="checkbox" id="auth-remember" checked>
+          Remember me
+        </label>
+        <a href="#" onclick="openForgotPasswordModal(); return false;">Forgot password?</a>
       </div>
       <button type="submit" class="btn-primary" id="auth-submit" style="width:100%;">Log In</button>
       <div id="auth-error"></div>
       <div id="auth-msg"></div>
     </form>
+  </div>
+</div>
+
+<!-- ================= PASSWORD RESET SCREEN (reached via emailed reset link) ================= -->
+<div id="reset-screen" class="auth-page" style="display:none;">
+  <div class="auth-box">
+    <div class="auth-icon">🔑</div>
+    <h1>Set a new password</h1>
+    <div class="tagline">Choose a new password for your Budget Buddy account.</div>
+    <form id="reset-form">
+      <div class="field">
+        <label for="reset-password">New password</label>
+        <div class="password-field-wrap">
+          <input type="password" id="reset-password" required autocomplete="new-password" placeholder="At least 8 characters" minlength="8">
+          <button type="button" class="password-toggle-btn" data-target="reset-password" onclick="togglePasswordVisibility(this)" title="Show password" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="reset-password-confirm">Confirm new password</label>
+        <div class="password-field-wrap">
+          <input type="password" id="reset-password-confirm" required autocomplete="new-password" placeholder="Type it again" minlength="8">
+          <button type="button" class="password-toggle-btn" data-target="reset-password-confirm" onclick="togglePasswordVisibility(this)" title="Show password" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" id="reset-submit" style="width:100%;">Save New Password</button>
+      <div id="reset-error"></div>
+      <div id="reset-msg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= Forgot password modal ================= -->
+<div class="modal-backdrop" id="forgot-modal-backdrop">
+  <div class="modal">
+    <h3>Reset your password</h3>
+    <div class="modal-sub">Enter your account email and we'll send you a link to set a new password.</div>
+    <div class="field">
+      <label for="forgot-email-input">Email</label>
+      <input type="email" id="forgot-email-input" placeholder="you@example.com">
+    </div>
+    <div id="forgot-error"></div>
+    <div id="forgot-msg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeForgotPasswordModal()">Cancel</button>
+      <button class="btn-primary" onclick="sendPasswordReset()">Send Link</button>
+    </div>
   </div>
 </div>
 
@@ -2577,14 +2687,49 @@ function switchAuthTab(mode) {
   document.getElementById("tab-login").classList.toggle("active", mode === "login");
   document.getElementById("tab-signup").classList.toggle("active", mode === "signup");
   document.getElementById("auth-submit").textContent = mode === "login" ? "Log In" : "Sign Up";
+  document.getElementById("auth-tagline").textContent = mode === "login"
+    ? "Good to see you — let's get your money organised."
+    : "Takes about a minute — let's get you set up.";
   document.getElementById("auth-error").style.display = "none";
   document.getElementById("auth-msg").style.display = "none";
+}
+
+// Show/hide toggle shared by every password field on the auth screens.
+function togglePasswordVisibility(btn) {
+  const input = document.getElementById(btn.dataset.target);
+  const showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  btn.textContent = showing ? "👁" : "🙈";
+  btn.title = showing ? "Show password" : "Hide password";
+}
+
+// "Remember me" — Supabase's own session already persists in localStorage
+// indefinitely, so unchecking this doesn't change how the session is
+// stored; instead it's enforced at the next cold start. On successful
+// login/signup we record the choice in localStorage (bb_remember) and, if
+// unchecked, a sessionStorage marker (bb_alive) that only survives while
+// the tab/browser stays open. On the next page load, init() below checks:
+// remember=false and no bb_alive marker means the browser was actually
+// closed and reopened, so it signs the session back out before anything
+// renders — a refresh within the same tab leaves bb_alive intact and stays
+// logged in, matching what "remember me" normally means.
+function rememberSessionChoice(remember) {
+  try {
+    if (remember) {
+      localStorage.setItem("bb_remember", "true");
+      sessionStorage.removeItem("bb_alive");
+    } else {
+      localStorage.setItem("bb_remember", "false");
+      sessionStorage.setItem("bb_alive", "1");
+    }
+  } catch (e) {}
 }
 
 document.getElementById("auth-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = document.getElementById("auth-email").value.trim();
   const password = document.getElementById("auth-password").value;
+  const remember = document.getElementById("auth-remember").checked;
   const errEl = document.getElementById("auth-error");
   const msgEl = document.getElementById("auth-msg");
   errEl.style.display = "none";
@@ -2597,6 +2742,7 @@ document.getElementById("auth-form").addEventListener("submit", async (e) => {
     if (authMode === "login") {
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      rememberSessionChoice(remember);
     } else {
       const { data, error } = await sb.auth.signUp({ email, password });
       if (error) throw error;
@@ -2604,6 +2750,8 @@ document.getElementById("auth-form").addEventListener("submit", async (e) => {
         msgEl.textContent = "Account created — check your email to confirm, then log in.";
         msgEl.style.display = "block";
         switchAuthTab("login");
+      } else if (data.session) {
+        rememberSessionChoice(remember);
       }
     }
   } catch (err) {
@@ -2614,11 +2762,86 @@ document.getElementById("auth-form").addEventListener("submit", async (e) => {
   }
 });
 
+// ---------------- Forgot / reset password ----------------
+function openForgotPasswordModal() {
+  document.getElementById("forgot-email-input").value = document.getElementById("auth-email").value.trim();
+  document.getElementById("forgot-error").style.display = "none";
+  document.getElementById("forgot-msg").style.display = "none";
+  document.getElementById("forgot-modal-backdrop").classList.add("show");
+}
+
+function closeForgotPasswordModal() {
+  document.getElementById("forgot-modal-backdrop").classList.remove("show");
+}
+
+async function sendPasswordReset() {
+  const email = document.getElementById("forgot-email-input").value.trim();
+  const errEl = document.getElementById("forgot-error");
+  const msgEl = document.getElementById("forgot-msg");
+  errEl.style.display = "none";
+  msgEl.style.display = "none";
+  if (!email) return;
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) {
+    errEl.textContent = error.message || "Something went wrong sending that email.";
+    errEl.style.display = "block";
+  } else {
+    msgEl.textContent = "If that email has an account, a reset link is on its way.";
+    msgEl.style.display = "block";
+  }
+}
+
+document.getElementById("reset-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = document.getElementById("reset-password").value;
+  const pw2 = document.getElementById("reset-password-confirm").value;
+  const errEl = document.getElementById("reset-error");
+  const msgEl = document.getElementById("reset-msg");
+  errEl.style.display = "none";
+  msgEl.style.display = "none";
+
+  if (pw !== pw2) {
+    errEl.textContent = "Those passwords don't match.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  const submitBtn = document.getElementById("reset-submit");
+  submitBtn.disabled = true;
+  try {
+    // The recovery link already authenticated this session.
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) throw error;
+    rememberSessionChoice(true);
+    msgEl.textContent = "Password updated — taking you in now...";
+    msgEl.style.display = "block";
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      currentUser = user;
+      setTimeout(showApp, 600);
+    }
+  } catch (err) {
+    errEl.textContent = err.message || "Couldn't update your password.";
+    errEl.style.display = "block";
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
 async function logout() {
   await sb.auth.signOut();
+  try { localStorage.removeItem("bb_remember"); sessionStorage.removeItem("bb_alive"); } catch (e) {}
 }
 
 sb.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    showPasswordResetScreen();
+    return;
+  }
   if (session && session.user) {
     currentUser = session.user;
     showApp();
@@ -2630,11 +2853,19 @@ sb.auth.onAuthStateChange((event, session) => {
 
 function showAuth() {
   document.getElementById("auth-screen").style.display = "flex";
+  document.getElementById("reset-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "none";
+}
+
+function showPasswordResetScreen() {
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("reset-screen").style.display = "flex";
   document.getElementById("app-screen").style.display = "none";
 }
 
 async function showApp() {
   document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("reset-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("user-email-label").textContent = currentUser.email;
   document.getElementById("currency-select").value = displayCurrency;
@@ -3235,13 +3466,18 @@ async function deleteAccount(id) {
 
 // ---------------- Init ----------------
 (async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session && session.user) {
-    currentUser = session.user;
-    showApp();
-  } else {
-    showAuth();
-  }
+  // If the last login was "don't remember" and bb_alive isn't set, the
+  // browser was actually closed and reopened since then (a same-tab
+  // refresh would have kept bb_alive) — sign out before the session below
+  // gets picked up. The onAuthStateChange listener above (already
+  // attached) handles showApp()/showAuth()/showPasswordResetScreen() from
+  // here, including the SIGNED_OUT event this can trigger.
+  try {
+    if (localStorage.getItem("bb_remember") === "false" && !sessionStorage.getItem("bb_alive")) {
+      await sb.auth.signOut();
+      localStorage.removeItem("bb_remember");
+    }
+  } catch (e) {}
 })();
 </script>
 
