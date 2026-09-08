@@ -47,7 +47,15 @@ create table if not exists bb_entries (
   -- Tax set-aside (income only): percentage of this untaxed (freelance/
   -- business) income entry to hold back from the predicted balance and
   -- forecast. General calculator only — not tax advice.
-  tax_set_aside_pct numeric(5,2) check (tax_set_aside_pct is null or (tax_set_aside_pct >= 0 and tax_set_aside_pct <= 100))
+  tax_set_aside_pct numeric(5,2) check (tax_set_aside_pct is null or (tax_set_aside_pct >= 0 and tax_set_aside_pct <= 100)),
+
+  -- Credit card tracking (only used when category = 'liability' and
+  -- is_credit_card = true). The entry's normal `amount` column holds the
+  -- current balance owed, same as any other liability.
+  is_credit_card boolean not null default false,
+  cc_due_day integer check (cc_due_day is null or (cc_due_day between 1 and 31)),  -- day of month payment is due
+  cc_min_payment numeric(14,2),   -- minimum monthly payment
+  cc_apr numeric(6,4)             -- annual interest rate as a fraction, e.g. 0.2275 = 22.75% (optional, powers the payoff calculator)
 );
 
 -- If you're re-running this against a database created before loan
@@ -66,6 +74,10 @@ alter table bb_entries add column if not exists recurrence_next_date date;
 alter table bb_entries add column if not exists tags text;
 alter table bb_entries add column if not exists receipt_path text;
 alter table bb_entries add column if not exists tax_set_aside_pct numeric(5,2);
+alter table bb_entries add column if not exists is_credit_card boolean not null default false;
+alter table bb_entries add column if not exists cc_due_day integer;
+alter table bb_entries add column if not exists cc_min_payment numeric(14,2);
+alter table bb_entries add column if not exists cc_apr numeric(6,4);
 
 create index if not exists bb_entries_user_category_idx
   on bb_entries (user_id, category);

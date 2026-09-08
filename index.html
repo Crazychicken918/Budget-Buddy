@@ -25,6 +25,8 @@
     --asset-bg: #e0f8fc;
     --liability: #f5a524;
     --liability-bg: #fef3de;
+    --cc: #c026d3;
+    --cc-bg: #fae8ff;
     --radius: 14px;
     --shadow: 0 1px 2px rgba(30,20,60,0.03), 0 6px 18px rgba(30,20,60,0.04);
   }
@@ -288,6 +290,16 @@
   .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
   .detail-header h2 { margin: 0; font-size: 20px; }
   .detail-header .cat-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .detail-subtitle {
+    margin: -12px 0 20px;
+    padding: 12px 14px;
+    background: var(--card-alt, #f6f7f9);
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--text-secondary, #55606c);
+  }
+  .detail-subtitle strong { color: inherit; }
   .cat-income { background: var(--income); }
   .cat-expense { background: var(--expense); }
   .cat-asset { background: var(--asset); }
@@ -411,9 +423,9 @@
     padding: 2px 7px;
     margin-left: 8px;
   }
-  .entry-row.loan { flex-direction: column; align-items: stretch; }
-  .entry-row.loan .loan-top { display: flex; justify-content: space-between; align-items: center; }
-  .entry-row.loan .loan-meta {
+  .entry-row.loan, .entry-row.cc { flex-direction: column; align-items: stretch; }
+  .entry-row.loan .loan-top, .entry-row.cc .loan-top { display: flex; justify-content: space-between; align-items: center; }
+  .entry-row.loan .loan-meta, .entry-row.cc .loan-meta {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 6px 14px;
@@ -421,8 +433,48 @@
     padding-top: 10px;
     border-top: 1px solid var(--border);
   }
-  .entry-row.loan .loan-meta div { font-size: 11.5px; color: var(--muted); }
-  .entry-row.loan .loan-meta span { display: block; color: var(--text); font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .entry-row.loan .loan-meta div, .entry-row.cc .loan-meta div { font-size: 11.5px; color: var(--muted); }
+  .entry-row.loan .loan-meta span, .entry-row.cc .loan-meta span { display: block; color: var(--text); font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+  /* Credit card fields (payment due day, minimum payment, optional APR) */
+  .cc-fields {
+    display: none;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 4px;
+  }
+  .cc-fields.show { display: flex; }
+  .cc-fields .field { flex: 1; min-width: 140px; margin-bottom: 0; }
+  .cc-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--cc);
+    background: var(--cc-bg);
+    border-radius: 6px;
+    padding: 2px 7px;
+    margin-left: 8px;
+  }
+  .cc-reminder-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--cc-bg);
+    color: var(--cc);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .cc-reminder-item strong { font-weight: 700; }
 
   .sim-toggle { margin-top: 10px; font-size: 12px; color: var(--accent); padding: 4px 0; }
   .sim-toggle:hover { text-decoration: underline; }
@@ -502,6 +554,8 @@
   .cal-pill.cal-out { background: var(--expense-bg); color: var(--expense); }
   .cal-pill.cal-tax { background: var(--liability-bg); color: var(--liability); }
   .calendar-legend .dot.tax { background: var(--liability); }
+  .cal-pill.cal-cc { background: var(--cc-bg); color: var(--cc); }
+  .calendar-legend .dot.cc { background: var(--cc); }
 
   /* ---------- Tax set-aside ---------- */
   .tax-toggle { display: none; align-items: center; }
@@ -963,6 +1017,7 @@
 
       <div class="streak-banner hidden" id="streak-banner"></div>
       <div class="tax-reserve-banner hidden" id="tax-reserve-banner"></div>
+      <div class="cc-reminder-banner hidden" id="cc-reminder-banner"></div>
 
       <div class="bubble-grid">
         <div class="bubble income" onclick="openCategory('income')">
@@ -1041,6 +1096,7 @@
           <span><span class="dot in"></span> Money coming in</span>
           <span><span class="dot out"></span> Money going out</span>
           <span class="hidden" id="calendar-legend-tax"><span class="dot tax"></span> Provisional tax deadline</span>
+          <span class="hidden" id="calendar-legend-cc"><span class="dot cc"></span> Credit card payment due</span>
         </div>
         <div class="calendar-grid" id="calendar-grid"></div>
         <div class="empty-state hidden" id="calendar-empty">No recurring payments yet — mark an income or expense entry as "recurring" to see it on this calendar.</div>
@@ -1054,6 +1110,8 @@
         <span class="cat-dot" id="detail-dot"></span>
         <h2 id="detail-title">Income</h2>
       </div>
+
+      <p class="detail-subtitle" id="detail-subtitle"></p>
 
       <div class="total-bar">
         <span id="detail-total-label">Total Income</span>
@@ -1158,6 +1216,22 @@
           <div class="field">
             <label for="loan-start-date">Start Date</label>
             <input type="date" id="loan-start-date">
+          </div>
+        </div>
+
+        <!-- Shown automatically for Liabilities when the description mentions "credit card" -->
+        <div class="cc-fields" id="cc-fields">
+          <div class="field">
+            <label for="cc-due-day">Payment Due Day (1–31)</label>
+            <input type="number" id="cc-due-day" min="1" max="31" step="1" placeholder="e.g. 25">
+          </div>
+          <div class="field">
+            <label for="cc-min-payment">Minimum Payment (R)</label>
+            <input type="number" id="cc-min-payment" step="0.01" min="0" placeholder="e.g. 500">
+          </div>
+          <div class="field">
+            <label for="cc-apr">Interest Rate (APR %, optional)</label>
+            <input type="number" id="cc-apr" step="0.01" min="0" placeholder="e.g. 22.75">
           </div>
         </div>
       </form>
@@ -1442,10 +1516,18 @@ let ratesLoaded = false;
 const LOAN_TYPE_LABELS = { mortgage: "Mortgage", car: "Car Loan", personal: "Personal Loan" };
 
 const CATEGORY_META = {
-  income:    { label: "Income",     totalLabel: "Total Income",     dot: "cat-income" },
-  expense:   { label: "Expenses",   totalLabel: "Total Expenses",   dot: "cat-expense" },
-  asset:     { label: "Assets",     totalLabel: "Total Assets",     dot: "cat-asset" },
-  liability: { label: "Liabilities",totalLabel: "Total Liabilities",dot: "cat-liability" }
+  income:    { label: "Income",     totalLabel: "Total Income",
+    hint: "Money coming in. Think: salary or wages, freelance or side-hustle income, rental income, interest earned, or a gift someone gave you.",
+    placeholder: "e.g. Salary, Freelance work, Rental income" },
+  expense:   { label: "Expenses",   totalLabel: "Total Expenses",
+    hint: "Money going out. Think: rent, groceries, transport, subscriptions, insurance, eating out, or loan repayments you make each month.",
+    placeholder: "e.g. Rent, Groceries, Netflix subscription" },
+  asset:     { label: "Assets",     totalLabel: "Total Assets",
+    hint: "<strong>An asset is anything you own that has value</strong> — money you'd get back if you sold it, or that's sitting there for you to use. Common examples: cash in your bank account, savings or investments, your car, property, jewellery, or equipment. Add each one here with its current value.",
+    placeholder: "e.g. Savings account, Car, Investments" },
+  liability: { label: "Liabilities",totalLabel: "Total Liabilities",
+    hint: "<strong>A liability is money you owe to someone else</strong> — a debt you're still paying off. Common examples: a home loan (bond), car finance, a credit card or store card balance, a student loan, or money borrowed from family. Add each one here with what you currently still owe.",
+    placeholder: "e.g. Home loan, Car finance, Credit card" }
 };
 
 // n is always a ZAR amount (that's what's stored) — converts to the
@@ -1675,6 +1757,66 @@ function entryValue(entry) {
   return Number(entry.amount) || 0;
 }
 
+// ---------------- Credit card payment reminders ----------------
+// Clamps a due-day (e.g. 31) to a real date in the given month, since not
+// every month has that many days (e.g. 31 in February becomes the 28th/29th).
+function ccDueDateInMonth(dueDay, year, month) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(dueDay, daysInMonth));
+}
+
+// The next upcoming due date for a credit card entry, from today onward
+// (rolls into next month if this month's due date has already passed).
+function nextCcDueDate(entry, fromDate) {
+  const from = fromDate || new Date();
+  const todayMidnight = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  let due = ccDueDateInMonth(entry.cc_due_day, todayMidnight.getFullYear(), todayMidnight.getMonth());
+  if (due < todayMidnight) {
+    const nextMonthIndex = todayMidnight.getMonth() + 1;
+    due = ccDueDateInMonth(entry.cc_due_day, todayMidnight.getFullYear() + Math.floor(nextMonthIndex / 12), nextMonthIndex % 12);
+  }
+  return due;
+}
+
+function daysUntilDate(date) {
+  const today = new Date();
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((date - todayMidnight) / 86400000);
+}
+
+function ccDueText(daysLeft, due) {
+  const dateStr = due.toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+  if (daysLeft === 0) return "Due today";
+  if (daysLeft === 1) return "Due tomorrow";
+  return `Due in ${daysLeft} days (${dateStr})`;
+}
+
+// Shows a banner on the dashboard for any credit card with a payment due
+// within the next week — hidden entirely when nothing's coming up soon.
+function renderCcReminderBanner() {
+  const banner = document.getElementById("cc-reminder-banner");
+  const cards = entriesCache.liability.filter(e => e.is_credit_card && e.cc_due_day);
+  const upcoming = cards
+    .map(e => {
+      const due = nextCcDueDate(e);
+      return { entry: e, due, daysLeft: daysUntilDate(due) };
+    })
+    .filter(x => x.daysLeft <= 7)
+    .sort((a, b) => a.daysLeft - b.daysLeft);
+
+  if (upcoming.length === 0) {
+    banner.classList.add("hidden");
+    banner.innerHTML = "";
+    return;
+  }
+  banner.classList.remove("hidden");
+  banner.innerHTML = upcoming.map(x => {
+    const when = ccDueText(x.daysLeft, x.due).toLowerCase();
+    const min = x.entry.cc_min_payment != null ? ` — pay at least ${money(Number(x.entry.cc_min_payment))}` : "";
+    return `<div class="cc-reminder-item">💳 <strong>${escapeHtml(x.entry.description)}</strong> ${when}${min}</div>`;
+  }).join("");
+}
+
 const RECURRENCE_LABELS = { weekly: "Weekly", biweekly: "Every 2 weeks", monthly: "Monthly", annual: "Annually" };
 
 // ---------------- Recurring payment calendar ----------------
@@ -1756,6 +1898,16 @@ function renderCalendar() {
     }
   }
 
+  // Credit card payment due dates — recurs every month on the same day.
+  const creditCards = entriesCache.liability.filter(e => e.is_credit_card && e.cc_due_day);
+  document.getElementById("calendar-legend-cc").classList.toggle("hidden", creditCards.length === 0);
+  for (const cc of creditCards) {
+    const day = ccDueDateInMonth(cc.cc_due_day, year, month).getDate();
+    const min = cc.cc_min_payment != null ? ` — min ${money(Number(cc.cc_min_payment))}` : "";
+    if (!eventsByDay[day]) eventsByDay[day] = [];
+    eventsByDay[day].push({ isCcDue: true, desc: cc.description + min });
+  }
+
   const grid = document.getElementById("calendar-grid");
   grid.innerHTML = "";
   const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -1791,6 +1943,9 @@ function renderCalendar() {
       if (ev.isTaxDeadline) {
         pill.className = "cal-pill cal-tax";
         pill.textContent = "⚠ Tax due";
+      } else if (ev.isCcDue) {
+        pill.className = "cal-pill cal-cc";
+        pill.textContent = "💳 Card due";
       } else {
         pill.className = "cal-pill " + (ev.category === "income" ? "cal-in" : "cal-out");
         pill.textContent = (ev.category === "income" ? "+" : "−") + money(ev.amount);
@@ -2968,6 +3123,7 @@ function renderDashboard() {
   renderSpendingHeatmap();
   renderGoals();
   renderBudgets();
+  renderCcReminderBanner();
   syncCurrentSnapshot(predictedBank).then(renderStreakBanner);
 }
 
@@ -2993,6 +3149,8 @@ function openCategory(cat) {
   document.getElementById("detail-title").textContent = meta.label;
   document.getElementById("detail-total-label").textContent = meta.totalLabel;
   document.getElementById("detail-dot").className = "cat-dot " + meta.dot;
+  document.getElementById("detail-subtitle").innerHTML = meta.hint || "";
+  document.getElementById("entry-desc").placeholder = meta.placeholder || "e.g. Salary, Rent, Car, Credit card, Home loan";
 
   document.getElementById("entry-desc").value = "";
   document.getElementById("entry-amount").value = "";
@@ -3001,6 +3159,10 @@ function openCategory(cat) {
   document.getElementById("entry-receipt-field").classList.toggle("hidden", cat !== "expense");
   currentTagFilter = null;
   hideLoanFields();
+  hideCcFields();
+  document.getElementById("cc-due-day").value = "";
+  document.getElementById("cc-min-payment").value = "";
+  document.getElementById("cc-apr").value = "";
 
   document.getElementById("entry-recurring").checked = false;
   document.getElementById("recurring-next-date").value = "";
@@ -3066,10 +3228,29 @@ function hideLoanFields() {
   document.getElementById("entry-amount").required = true;
 }
 
+function showCcFields() {
+  document.getElementById("cc-fields").classList.add("show");
+}
+
+function hideCcFields() {
+  document.getElementById("cc-fields").classList.remove("show");
+}
+
 document.getElementById("entry-desc").addEventListener("input", (e) => {
   if (currentCategory !== "liability") return;
-  const isLoan = /\bloan\b/i.test(e.target.value);
-  if (isLoan) showLoanFields(); else hideLoanFields();
+  const value = e.target.value;
+  const isLoan = /\bloan\b/i.test(value);
+  const isCreditCard = !isLoan && /\bcredit\s*card\b/i.test(value);
+  if (isLoan) {
+    showLoanFields();
+    hideCcFields();
+  } else if (isCreditCard) {
+    hideLoanFields();
+    showCcFields();
+  } else {
+    hideLoanFields();
+    hideCcFields();
+  }
 });
 
 function onLoanRateTypeChange() {
@@ -3179,6 +3360,34 @@ function renderEntryList() {
           <div class="loan-sim-result"></div>
         </div>
       `;
+    } else if (entry.category === "liability" && entry.is_credit_card) {
+      row.className = "entry-row cc";
+      const balance = Number(entry.amount) || 0;
+      const due = entry.cc_due_day ? nextCcDueDate(entry) : null;
+      const dueText = due ? ccDueText(daysUntilDate(due), due) : "No due date set";
+
+      row.innerHTML = `
+        <div class="loan-top">
+          <span class="desc">${escapeHtml(entry.description)}<span class="cc-badge">💳 Credit Card</span>${tagChipsHtml(entry.tags)}</span>
+          <span class="right">
+            <span class="amt">${money(balance)}</span>
+            <button class="btn-danger" data-id="${entry.id}">Delete</button>
+          </span>
+        </div>
+        <div class="loan-meta">
+          <div>Payment Due<span>${dueText}</span></div>
+          <div>Minimum Payment<span>${entry.cc_min_payment != null ? money(Number(entry.cc_min_payment)) : "—"}</span></div>
+          <div>Interest Rate<span>${entry.cc_apr != null ? pct(Number(entry.cc_apr)) : "Not set"}</span></div>
+        </div>
+        <button class="sim-toggle" type="button">+ Payoff calculator</button>
+        <div class="loan-sim cc-payoff">
+          <div class="loan-sim-row">
+            <input type="number" class="loan-sim-input cc-payoff-input" placeholder="Monthly payment (R)" step="0.01" min="0" value="${entry.cc_min_payment != null ? Number(entry.cc_min_payment) : ""}">
+            <button class="btn-secondary cc-payoff-calc" type="button">Calculate</button>
+          </div>
+          <div class="loan-sim-result cc-payoff-result"></div>
+        </div>
+      `;
     } else {
       row.className = "entry-row";
       const recurringTag = entry.is_recurring
@@ -3202,7 +3411,45 @@ function renderEntryList() {
     if (receiptBtnEl) receiptBtnEl.addEventListener("click", () => viewReceipt(receiptBtnEl.dataset.receipt));
 
     const simToggle = row.querySelector(".sim-toggle");
-    if (simToggle) {
+    if (simToggle && entry.category === "liability" && entry.is_credit_card) {
+      const payoffPanel = row.querySelector(".cc-payoff");
+      simToggle.addEventListener("click", () => {
+        payoffPanel.classList.toggle("show");
+        simToggle.textContent = payoffPanel.classList.contains("show") ? "− Payoff calculator" : "+ Payoff calculator";
+      });
+      row.querySelector(".cc-payoff-calc").addEventListener("click", () => {
+        const input = row.querySelector(".cc-payoff-input");
+        const payment = parseFloat(input.value);
+        const resultEl = row.querySelector(".cc-payoff-result");
+        const balance = Number(entry.amount) || 0;
+        if (isNaN(payment) || payment <= 0) {
+          resultEl.innerHTML = `<div class="empty-state" style="padding:8px 0;font-size:12px;">Enter a monthly payment to calculate.</div>`;
+          return;
+        }
+        if (entry.cc_apr == null) {
+          const months = Math.ceil(balance / payment);
+          resultEl.innerHTML = `
+            <div class="loan-sim-stats">
+              <div><span class="stat-label">Payoff Time</span><strong>${months} mo</strong></div>
+            </div>
+            <div class="empty-state" style="padding:8px 0 0;font-size:11.5px;">Add an interest rate above for a more accurate estimate — interest isn't included here.</div>
+          `;
+          return;
+        }
+        const result = simulateLoanPayoff(balance, Number(entry.cc_apr) / 12, payment);
+        if (!result) {
+          resultEl.innerHTML = `<div class="empty-state" style="padding:8px 0;font-size:12px;">That payment doesn't even cover the monthly interest — try a higher amount.</div>`;
+          return;
+        }
+        resultEl.innerHTML = `
+          <div class="loan-sim-stats">
+            <div><span class="stat-label">Payoff Time</span><strong>${result.months} mo</strong></div>
+            <div><span class="stat-label">Total Interest</span><strong>${money(result.interestPaid)}</strong></div>
+            <div><span class="stat-label">Total Paid</span><strong>${money(balance + result.interestPaid)}</strong></div>
+          </div>
+        `;
+      });
+    } else if (simToggle) {
       const simPanel = row.querySelector(".loan-sim");
       simToggle.addEventListener("click", () => {
         simPanel.classList.toggle("show");
@@ -3241,6 +3488,7 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
   const amtEl = document.getElementById("entry-amount");
   const description = descEl.value.trim();
   const isLoan = currentCategory === "liability" && document.getElementById("loan-fields").classList.contains("show");
+  const isCreditCard = currentCategory === "liability" && document.getElementById("cc-fields").classList.contains("show");
   const tagsStr = document.getElementById("entry-tags").value.trim();
   const tagsValue = tagsStr ? parseTags(tagsStr).join(",") : null;
 
@@ -3291,6 +3539,18 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
       if (isNaN(taxPct) || taxPct < 0 || taxPct > 100) { alert("Please enter a tax set-aside percentage between 0 and 100."); return; }
       payload.tax_set_aside_pct = taxPct;
     }
+
+    if (isCreditCard) {
+      const dueDay = parseInt(document.getElementById("cc-due-day").value, 10);
+      const minPayment = parseFloat(document.getElementById("cc-min-payment").value);
+      const aprPct = parseFloat(document.getElementById("cc-apr").value);
+      if (!dueDay || dueDay < 1 || dueDay > 31) { alert("Please enter a payment due day between 1 and 31."); return; }
+      if (isNaN(minPayment) || minPayment < 0) { alert("Please enter a minimum payment amount."); return; }
+      payload.is_credit_card = true;
+      payload.cc_due_day = dueDay;
+      payload.cc_min_payment = minPayment;
+      payload.cc_apr = isNaN(aprPct) ? null : aprPct / 100;
+    }
   }
 
   const { data, error } = await sb.from("bb_entries").insert(payload).select().single();
@@ -3321,6 +3581,10 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
     document.getElementById("loan-margin").value = "";
     document.getElementById("loan-fixed-rate").value = "";
     hideLoanFields();
+    document.getElementById("cc-due-day").value = "";
+    document.getElementById("cc-min-payment").value = "";
+    document.getElementById("cc-apr").value = "";
+    hideCcFields();
     document.getElementById("entry-recurring").checked = false;
     document.getElementById("recurring-next-date").value = "";
     document.getElementById("recurring-frequency").value = "monthly";
