@@ -265,9 +265,14 @@ create policy "bb_settings: update own" on bb_settings
 drop policy if exists "bb_prime_rate: select all authenticated" on bb_prime_rate;
 create policy "bb_prime_rate: select all authenticated" on bb_prime_rate
   for select using (auth.role() = 'authenticated');
+-- Only Jared can update the shared prime rate — everyone else (once there
+-- are other users) gets read-only access via the select policy above.
+-- Matched by email rather than a hardcoded user id so this keeps working
+-- if the account is ever recreated.
 drop policy if exists "bb_prime_rate: update all authenticated" on bb_prime_rate;
-create policy "bb_prime_rate: update all authenticated" on bb_prime_rate
-  for update using (auth.role() = 'authenticated');
+drop policy if exists "bb_prime_rate: update owner only" on bb_prime_rate;
+create policy "bb_prime_rate: update owner only" on bb_prime_rate
+  for update using (auth.jwt() ->> 'email' = 'jazzamills516@gmail.com');
 
 drop policy if exists "bb_accounts: select own" on bb_accounts;
 create policy "bb_accounts: select own" on bb_accounts
@@ -345,3 +350,73 @@ create policy "bb_budgets: insert own" on bb_budgets
 drop policy if exists "bb_budgets: delete own" on bb_budgets;
 create policy "bb_budgets: delete own" on bb_budgets
   for delete using (auth.uid() = user_id);
+
+-- Household / partner view-only sharing: a revocable link that shows a
+-- read-only snapshot of the dashboard to anyone who has it, without them
+-- needing an account or login. The token is the only "credential" — treat
+-- it like a password-reset link, and revoke it if it's ever shared wider
+-- than intended.
+create table if not exists bb_share_links (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  token text not null unique default encode(gen_random_bytes(24), 'hex'),
+  label text,                      -- optional note, e.g. "For Thandi"
+  created_at timestamptz not null default now(),
+  revoked boolean not null default false
+);
+
+create index if not exists bb_share_links_user_idx on bb_share_links (user_id);
+create index if not exists bb_share_links_token_idx on bb_share_links (token) where not revoked;
+
+alter table bb_share_links enable row level security;
+drop policy if exists "bb_share_links: select own" on bb_share_links;
+create policy "bb_share_links: select own" on bb_share_links
+  for select using (auth.uid() = user_id);
+drop policy if exists "bb_share_links: insert own" on bb_share_links;
+create policy "bb_share_links: insert own" on bb_share_links
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "bb_share_links: update own" on bb_share_links;
+create policy "bb_share_links: update own" on bb_share_links
+  for update using (auth.uid() = user_id);
+drop policy if exists "bb_share_links: delete own" on bb_share_links;
+create policy "bb_share_links: delete own" on bb_share_links
+  for delete using (auth.uid() = user_id);
+
+-- Read-only viewer function: given a valid, unrevoked share token, returns
+-- a JSON snapshot of that token owner's dashboard data. SECURITY DEFINER
+-- so it can deliberately bypass RLS — but it only ever SELECTs, never
+-- writes, and only ever returns data scoped to that one token's owner.
+-- Grantable to anon since the token itself (not a login) is the access
+-- check — anyone with the link can view; nobody without it can.
+create or replace function get_shared_dashboard(p_token text)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_result json;
+begin
+  select user_id into v_user_id
+  from bb_share_links
+  where token = p_token and not revoked;
+
+  if v_user_id is null then
+    return null;
+  end if;
+
+  select json_build_object(
+    'entries', (select coalesce(json_agg(e), '[]'::json) from bb_entries e where e.user_id = v_user_id),
+    'accounts', (select coalesce(json_agg(a), '[]'::json) from bb_accounts a where a.user_id = v_user_id),
+    'goals', (select coalesce(json_agg(g), '[]'::json) from bb_goals g where g.user_id = v_user_id),
+    'budgets', (select coalesce(json_agg(b), '[]'::json) from bb_budgets b where b.user_id = v_user_id),
+    'snapshots', (select coalesce(json_agg(s), '[]'::json) from bb_balance_snapshots s where s.user_id = v_user_id),
+    'prime_rate', (select row_to_json(p) from bb_prime_rate p where p.id = 1)
+  ) into v_result;
+
+  return v_result;
+end;
+$$;
+
+grant execute on function get_shared_dashboard(text) to anon, authenticated;

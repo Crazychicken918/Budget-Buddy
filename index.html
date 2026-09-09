@@ -30,6 +30,54 @@
     --radius: 14px;
     --shadow: 0 1px 2px rgba(30,20,60,0.03), 0 6px 18px rgba(30,20,60,0.04);
   }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #131218;
+      --bg-elev: #1a1922;
+      --card: #1c1b25;
+      --card-hover: #262536;
+      --border: #2e2d3d;
+      --text: #eeecf7;
+      --muted: #a29dbb;
+      --accent: #a58bff;
+      --accent-dim: #2b2545;
+      --income: #35dba3;
+      --income-bg: #12332a;
+      --expense: #ff7a94;
+      --expense-bg: #3a1620;
+      --asset: #38dcf5;
+      --asset-bg: #10313b;
+      --liability: #f7bb5c;
+      --liability-bg: #3a2c10;
+      --cc: #e58af5;
+      --cc-bg: #391a41;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 6px 18px rgba(0,0,0,0.28);
+    }
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #131218;
+    --bg-elev: #1a1922;
+    --card: #1c1b25;
+    --card-hover: #262536;
+    --border: #2e2d3d;
+    --text: #eeecf7;
+    --muted: #a29dbb;
+    --accent: #a58bff;
+    --accent-dim: #2b2545;
+    --income: #35dba3;
+    --income-bg: #12332a;
+    --expense: #ff7a94;
+    --expense-bg: #3a1620;
+    --asset: #38dcf5;
+    --asset-bg: #10313b;
+    --liability: #f7bb5c;
+    --liability-bg: #3a2c10;
+    --cc: #e58af5;
+    --cc-bg: #391a41;
+    --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 6px 18px rgba(0,0,0,0.28);
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -180,6 +228,8 @@
 
   /* ---------- App shell ---------- */
   #app-screen { display: none; }
+  #share-screen { display: none; }
+  #share-screen .bubble { cursor: default; }
   header.topbar {
     display: flex;
     align-items: center;
@@ -320,7 +370,8 @@
   }
   .entry-row .desc { font-size: 14px; }
   .entry-row .amt { font-weight: 700; margin-right: 14px; }
-  .entry-row .right { display: flex; align-items: center; }
+  .entry-row .right { display: flex; align-items: center; gap: 8px; }
+  #entry-form-actions { display: inline-flex; gap: 10px; align-items: center; }
   .empty-state { text-align: center; color: var(--muted); padding: 40px 0; font-size: 13.5px; }
   .total-bar {
     display: flex;
@@ -356,6 +407,33 @@
   .modal h3 { margin: 0 0 4px 0; font-size: 16px; }
   .modal .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+  .share-link-row {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .share-link-row .slr-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .share-link-row .slr-label { font-size: 13px; font-weight: 700; }
+  .share-link-row .slr-meta { font-size: 11px; color: var(--muted); }
+  .share-link-row .slr-url-row { display: flex; gap: 6px; }
+  .share-link-row input[type="text"] { font-size: 12px; padding: 6px 8px; }
+  .share-link-row button { font-size: 12px; padding: 6px 10px; white-space: nowrap; }
+  .share-view-banner {
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 
   /* ---------- Account manager ---------- */
   .account-row {
@@ -879,6 +957,17 @@
     .calendar-legend { flex-direction: column; align-items: center; gap: 6px; }
   }
 </style>
+<script>
+  // Applied before paint so there's no flash of the wrong theme.
+  (function () {
+    try {
+      var saved = localStorage.getItem("bb_theme");
+      if (saved === "dark" || saved === "light") {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    } catch (e) {}
+  })();
+</script>
 </head>
 <body>
 
@@ -977,6 +1066,8 @@
         <option value="EUR">€ — EUR</option>
         <option value="GBP">£ — GBP</option>
       </select>
+      <button class="btn-secondary" onclick="openShareModal()" title="Get a read-only link to share with your household">Share</button>
+      <button class="btn-secondary" id="theme-toggle-btn" onclick="toggleTheme()" title="Switch between light and dark">🌙</button>
       <button class="btn-secondary" onclick="exportDataCSV()" title="Download all your data as a CSV file">Export CSV</button>
       <button class="btn-secondary" onclick="logout()">Log Out</button>
     </div>
@@ -1141,7 +1232,10 @@
           <label for="entry-receipt">Receipt photo (optional)</label>
           <input type="file" id="entry-receipt" accept="image/*">
         </div>
-        <button type="submit" class="btn-primary">Add</button>
+        <span id="entry-form-actions">
+          <button type="submit" class="btn-primary" id="entry-submit-btn">Add</button>
+          <button type="button" class="btn-secondary hidden" id="entry-cancel-edit-btn">Cancel</button>
+        </span>
 
         <!-- Shown for Income / Expenses only -->
         <div class="tax-toggle" id="tax-toggle-wrap">
@@ -1348,9 +1442,92 @@
   <footer class="app-footer">
     <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
     <span>·</span>
+    <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
+    <span>·</span>
     <span>Budget Buddy</span>
     <span>·</span>
     <span class="tax-footer-note">Tax figures shown in this app are general estimates, not advice — Budget Buddy isn't a registered tax practitioner.</span>
+  </footer>
+</div>
+
+<!-- ================= SHARE SCREEN (read-only, reached via ?share=TOKEN link, no login) ================= -->
+<div id="share-screen" style="display:none;">
+  <header class="topbar">
+    <div><h1>Budget Buddy <span class="user-email">— shared view</span></h1></div>
+  </header>
+  <main>
+    <div class="share-view-banner">👀 You're viewing a read-only snapshot someone shared with you. You can't add, edit, or delete anything here.</div>
+
+    <div id="share-loading" class="empty-state">Loading shared dashboard…</div>
+    <div id="share-error" class="empty-state hidden">This share link isn't valid, or it's been revoked by its owner.</div>
+
+    <div id="share-content" class="hidden">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="label"><span>Predicted Bank Balance</span></div>
+          <div class="value" id="share-summary-bank">R0.00</div>
+          <div class="sub">Across their bank accounts, + income − expenses</div>
+        </div>
+        <div class="summary-card savings">
+          <div class="label"><span>Savings Accounts</span></div>
+          <div class="value" id="share-summary-savings">R0.00</div>
+          <div class="sub">Across all their savings accounts</div>
+        </div>
+        <div class="summary-card diff">
+          <div class="label"><span>Income vs Expenses</span></div>
+          <div class="value" id="share-summary-diff">R0.00</div>
+          <div class="sub">Difference this period</div>
+        </div>
+      </div>
+
+      <div class="bubble-grid">
+        <div class="bubble income">
+          <div class="icon">↑</div>
+          <div class="title">Income</div>
+          <div class="total" id="share-bubble-income">R0.00</div>
+        </div>
+        <div class="bubble expense">
+          <div class="icon">↓</div>
+          <div class="title">Expenses</div>
+          <div class="total" id="share-bubble-expense">R0.00</div>
+        </div>
+        <div class="bubble asset">
+          <div class="icon">◆</div>
+          <div class="title">Assets</div>
+          <div class="total" id="share-bubble-asset">R0.00</div>
+        </div>
+        <div class="bubble liability">
+          <div class="icon">!</div>
+          <div class="title">Liabilities</div>
+          <div class="total" id="share-bubble-liability">R0.00</div>
+        </div>
+      </div>
+
+      <div class="goals-section">
+        <h3>Savings Goals</h3>
+        <div class="goals-grid" id="share-goals-grid"></div>
+        <div class="empty-state hidden" id="share-goals-empty">No goals set.</div>
+      </div>
+
+      <div class="budgets-section">
+        <h3>Budget vs Actual</h3>
+        <div class="budgets-list" id="share-budgets-list"></div>
+        <div class="empty-state hidden" id="share-budgets-empty">No budgets set.</div>
+      </div>
+
+      <div class="calendar-section">
+        <h3>Entries</h3>
+        <div class="tag-filter-row hidden"></div>
+        <div id="share-entries"></div>
+      </div>
+    </div>
+  </main>
+  <footer class="app-footer">
+    <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+    <span>·</span>
+    <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
+    <span>·</span>
+    <span>Budget Buddy</span>
   </footer>
 </div>
 
@@ -1459,6 +1636,25 @@
   </div>
 </div>
 
+<!-- ================= Share modal (household / partner view-only links) ================= -->
+<div class="modal-backdrop" id="share-modal-backdrop">
+  <div class="modal">
+    <h3>Share Budget Buddy</h3>
+    <div class="modal-sub">Create a link that shows a read-only snapshot of your dashboard — no login needed. Anyone with the link can view it until you revoke it, so only share it with people you trust.</div>
+    <div class="field">
+      <label for="share-label-input">Label (optional)</label>
+      <input type="text" id="share-label-input" placeholder="e.g. For Thandi">
+    </div>
+    <div class="modal-actions" style="margin-bottom:16px;">
+      <button class="btn-primary" onclick="createShareLink()">Create Link</button>
+    </div>
+    <div id="share-links-list"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeShareModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= New scenario modal ================= -->
 <div class="modal-backdrop" id="scenario-modal-backdrop">
   <div class="modal">
@@ -1489,12 +1685,42 @@ const SUPABASE_ANON_KEY = "sb_publishable_O4zQwUhM5sPEDL8JE3B2QA_udfCl0uZ";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ---------------- Theme (light/dark) ----------------
+function isDarkActive() {
+  const explicit = document.documentElement.getAttribute("data-theme");
+  if (explicit === "dark") return true;
+  if (explicit === "light") return false;
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function updateThemeToggleIcon() {
+  const btn = document.getElementById("theme-toggle-btn");
+  if (btn) btn.textContent = isDarkActive() ? "☀️" : "🌙";
+}
+
+function toggleTheme() {
+  const next = isDarkActive() ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("bb_theme", next); } catch (e) {}
+  updateThemeToggleIcon();
+}
+
+updateThemeToggleIcon();
+
 let currentUser = null;
 let currentCategory = null;
+let editingEntryId = null;
 let entriesCache = { income: [], expense: [], asset: [], liability: [] };
 let accountsCache = { bank: [], savings: [] };
 let primeRate = null;           // annual fraction, e.g. 0.105, loaded from bb_prime_rate
 let primeRateUpdatedAt = null;
+
+// ---------------- Household view-only sharing ----------------
+// If the page was opened with ?share=TOKEN, this is a read-only visit from
+// someone the account owner shared a link with — no login, no writes, and
+// the normal auth screens must stay out of the way entirely.
+const shareToken = new URLSearchParams(window.location.search).get("share");
+const isShareMode = !!shareToken;
 let accountsModalType = null;   // 'bank' | 'savings'
 let calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let scenariosCache = [];        // [{ id, name, discount_rate, cashflows: [{id, period, amount}] }]
@@ -3007,18 +3233,21 @@ sb.auth.onAuthStateChange((event, session) => {
 });
 
 function showAuth() {
+  if (isShareMode) return;
   document.getElementById("auth-screen").style.display = "flex";
   document.getElementById("reset-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "none";
 }
 
 function showPasswordResetScreen() {
+  if (isShareMode) return;
   document.getElementById("auth-screen").style.display = "none";
   document.getElementById("reset-screen").style.display = "flex";
   document.getElementById("app-screen").style.display = "none";
 }
 
 async function showApp() {
+  if (isShareMode) return;
   document.getElementById("auth-screen").style.display = "none";
   document.getElementById("reset-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
@@ -3173,6 +3402,10 @@ function openCategory(cat) {
   document.getElementById("tax-pct-input").value = "";
   hideTaxFields();
   document.getElementById("tax-toggle-wrap").classList.toggle("show", cat === "income");
+
+  editingEntryId = null;
+  document.getElementById("entry-submit-btn").textContent = "Add";
+  document.getElementById("entry-cancel-edit-btn").classList.add("hidden");
 
   const recurringWrap = document.getElementById("recurring-toggle-wrap");
   if (cat === "income" || cat === "expense") {
@@ -3341,6 +3574,7 @@ function renderEntryList() {
           <span class="desc">${escapeHtml(entry.description)}<span class="loan-badge">${LOAN_TYPE_LABELS[entry.loan_type] || "Loan"}</span>${tagChipsHtml(entry.tags)}</span>
           <span class="right">
             <span class="amt">${money(balance)}</span>
+            <button class="btn-secondary btn-edit" data-id="${entry.id}">Edit</button>
             <button class="btn-danger" data-id="${entry.id}">Delete</button>
           </span>
         </div>
@@ -3371,6 +3605,7 @@ function renderEntryList() {
           <span class="desc">${escapeHtml(entry.description)}<span class="cc-badge">💳 Credit Card</span>${tagChipsHtml(entry.tags)}</span>
           <span class="right">
             <span class="amt">${money(balance)}</span>
+            <button class="btn-secondary btn-edit" data-id="${entry.id}">Edit</button>
             <button class="btn-danger" data-id="${entry.id}">Delete</button>
           </span>
         </div>
@@ -3402,11 +3637,13 @@ function renderEntryList() {
         <span class="right">
           <span class="amt">${money(entryValue(entry))}</span>
           ${receiptBtn}
+          <button class="btn-secondary btn-edit" data-id="${entry.id}">Edit</button>
           <button class="btn-danger" data-id="${entry.id}">Delete</button>
         </span>
       `;
     }
     row.querySelector(".btn-danger").addEventListener("click", () => deleteEntry(entry.id));
+    row.querySelector(".btn-edit").addEventListener("click", () => editEntry(entry.id));
     const receiptBtnEl = row.querySelector(".receipt-btn");
     if (receiptBtnEl) receiptBtnEl.addEventListener("click", () => viewReceipt(receiptBtnEl.dataset.receipt));
 
@@ -3553,10 +3790,21 @@ document.getElementById("entry-form").addEventListener("submit", async (e) => {
     }
   }
 
-  const { data, error } = await sb.from("bb_entries").insert(payload).select().single();
+  const isEditing = editingEntryId != null;
+  const { data, error } = isEditing
+    ? await sb.from("bb_entries").update(payload).eq("id", editingEntryId).select().single()
+    : await sb.from("bb_entries").insert(payload).select().single();
 
   if (!error && data) {
-    entriesCache[currentCategory].unshift(data);
+    if (isEditing) {
+      const idx = entriesCache[currentCategory].findIndex(e => e.id === editingEntryId);
+      if (idx !== -1) entriesCache[currentCategory][idx] = data;
+    } else {
+      entriesCache[currentCategory].unshift(data);
+    }
+    editingEntryId = null;
+    document.getElementById("entry-submit-btn").textContent = "Add";
+    document.getElementById("entry-cancel-edit-btn").classList.add("hidden");
 
     const receiptInput = document.getElementById("entry-receipt");
     if (currentCategory === "expense" && !isLoan && receiptInput.files[0]) {
@@ -3608,6 +3856,89 @@ async function deleteEntry(id) {
     renderCalendar();
   }
 }
+
+// ---------------- Edit entry (reuses the add form in "edit mode") ----------------
+function editEntry(id) {
+  const entry = entriesCache[currentCategory].find(e => e.id === id);
+  if (!entry) return;
+
+  editingEntryId = id;
+  document.getElementById("entry-desc").value = entry.description;
+  document.getElementById("entry-tags").value = entry.tags || "";
+
+  hideLoanFields();
+  hideCcFields();
+  hideRecurringFields();
+  hideTaxFields();
+  document.getElementById("entry-recurring").checked = false;
+  document.getElementById("entry-tax-untaxed").checked = false;
+
+  if (entry.category === "liability" && entry.is_loan) {
+    showLoanFields();
+    document.getElementById("loan-type").value = entry.loan_type || "mortgage";
+    document.getElementById("loan-rate-type").value = entry.rate_type || "prime_plus";
+    onLoanRateTypeChange();
+    document.getElementById("loan-margin").value = entry.prime_margin != null ? Number(entry.prime_margin) * 100 : "";
+    document.getElementById("loan-fixed-rate").value = entry.fixed_rate != null ? Number(entry.fixed_rate) * 100 : "";
+    document.getElementById("loan-principal").value = entry.principal != null ? Number(entry.principal) : "";
+    document.getElementById("loan-term").value = entry.term_months || "";
+    document.getElementById("loan-start-date").value = entry.start_date || "";
+  } else if (entry.category === "liability" && entry.is_credit_card) {
+    showCcFields();
+    document.getElementById("entry-amount").value = Number(entry.amount) || 0;
+    document.getElementById("cc-due-day").value = entry.cc_due_day || "";
+    document.getElementById("cc-min-payment").value = entry.cc_min_payment != null ? Number(entry.cc_min_payment) : "";
+    document.getElementById("cc-apr").value = entry.cc_apr != null ? Number(entry.cc_apr) * 100 : "";
+  } else {
+    document.getElementById("entry-amount").value = Number(entry.amount) || 0;
+
+    if ((entry.category === "income" || entry.category === "expense") && entry.is_recurring) {
+      document.getElementById("entry-recurring").checked = true;
+      showRecurringFields();
+      document.getElementById("recurring-frequency").value = entry.recurrence_frequency || "monthly";
+      document.getElementById("recurring-next-date").value = entry.recurrence_next_date || "";
+    }
+
+    if (entry.category === "income" && (Number(entry.tax_set_aside_pct) || 0) > 0) {
+      document.getElementById("entry-tax-untaxed").checked = true;
+      showTaxFields();
+      document.getElementById("tax-pct-input").value = Number(entry.tax_set_aside_pct);
+    }
+  }
+
+  document.getElementById("entry-submit-btn").textContent = "Save Changes";
+  document.getElementById("entry-cancel-edit-btn").classList.remove("hidden");
+  document.getElementById("entry-form").scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("entry-desc").focus();
+}
+
+function cancelEditEntry() {
+  editingEntryId = null;
+  document.getElementById("entry-desc").value = "";
+  document.getElementById("entry-amount").value = "";
+  document.getElementById("entry-tags").value = "";
+  hideLoanFields();
+  hideCcFields();
+  document.getElementById("loan-principal").value = "";
+  document.getElementById("loan-term").value = "";
+  document.getElementById("loan-start-date").value = "";
+  document.getElementById("loan-margin").value = "";
+  document.getElementById("loan-fixed-rate").value = "";
+  document.getElementById("cc-due-day").value = "";
+  document.getElementById("cc-min-payment").value = "";
+  document.getElementById("cc-apr").value = "";
+  document.getElementById("entry-recurring").checked = false;
+  document.getElementById("recurring-next-date").value = "";
+  document.getElementById("recurring-frequency").value = "monthly";
+  hideRecurringFields();
+  document.getElementById("entry-tax-untaxed").checked = false;
+  document.getElementById("tax-pct-input").value = "";
+  hideTaxFields();
+  document.getElementById("entry-submit-btn").textContent = "Add";
+  document.getElementById("entry-cancel-edit-btn").classList.add("hidden");
+}
+
+document.getElementById("entry-cancel-edit-btn").addEventListener("click", cancelEditEntry);
 
 // ---------------- Prime rate edit modal ----------------
 function openPrimeRateModal() {
@@ -3728,8 +4059,231 @@ async function deleteAccount(id) {
   }
 }
 
+// ---------------- Share link management (owner side, from the app) ----------------
+function shareUrlFor(token) {
+  return window.location.origin + window.location.pathname + "?share=" + token;
+}
+
+async function loadShareLinks() {
+  const { data, error } = await sb
+    .from("bb_share_links")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+  renderShareLinksList(!error && data ? data : []);
+}
+
+function renderShareLinksList(links) {
+  const list = document.getElementById("share-links-list");
+  const active = links.filter(l => !l.revoked);
+  if (active.length === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding:10px 0;">No active share links yet.</div>`;
+    return;
+  }
+  list.innerHTML = active.map(l => `
+    <div class="share-link-row" data-id="${l.id}">
+      <div class="slr-top">
+        <span class="slr-label">${l.label ? escapeHtml(l.label) : "Untitled link"}</span>
+        <span class="slr-meta">Created ${new Date(l.created_at).toLocaleDateString("en-ZA")}</span>
+      </div>
+      <div class="slr-url-row">
+        <input type="text" readonly value="${escapeHtml(shareUrlFor(l.token))}">
+        <button class="btn-secondary" data-action="copy" data-url="${escapeHtml(shareUrlFor(l.token))}">Copy</button>
+        <button class="btn-danger" data-action="revoke" data-id="${l.id}">Revoke</button>
+      </div>
+    </div>
+  `).join("");
+  list.querySelectorAll('[data-action="copy"]').forEach(btn => {
+    btn.addEventListener("click", () => copyShareLink(btn.dataset.url));
+  });
+  list.querySelectorAll('[data-action="revoke"]').forEach(btn => {
+    btn.addEventListener("click", () => revokeShareLink(btn.dataset.id));
+  });
+}
+
+function openShareModal() {
+  document.getElementById("share-label-input").value = "";
+  document.getElementById("share-modal-backdrop").classList.add("show");
+  loadShareLinks();
+}
+
+function closeShareModal() {
+  document.getElementById("share-modal-backdrop").classList.remove("show");
+}
+
+async function createShareLink() {
+  const label = document.getElementById("share-label-input").value.trim() || null;
+  const { error } = await sb.from("bb_share_links").insert({ user_id: currentUser.id, label });
+  if (error) {
+    alert("Couldn't create that link: " + error.message);
+    return;
+  }
+  document.getElementById("share-label-input").value = "";
+  loadShareLinks();
+}
+
+async function revokeShareLink(id) {
+  const { error } = await sb.from("bb_share_links").update({ revoked: true }).eq("id", id);
+  if (!error) loadShareLinks();
+}
+
+async function copyShareLink(url) {
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch (e) {
+    // Clipboard API can be unavailable (e.g. insecure context) — the link
+    // is already visible and selected in its input for manual copying.
+  }
+}
+
+// ---------------- Share view (visitor side, ?share=TOKEN, no login) ----------------
+function showShareScreen() {
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("reset-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "none";
+  document.getElementById("share-screen").style.display = "block";
+}
+
+async function initShareView(token) {
+  showShareScreen();
+  await loadExchangeRates();
+  const sel = document.getElementById("currency-select");
+  if (sel) sel.value = displayCurrency;
+
+  const { data, error } = await sb.rpc("get_shared_dashboard", { p_token: token });
+  const loadingEl = document.getElementById("share-loading");
+  const errorEl = document.getElementById("share-error");
+  const contentEl = document.getElementById("share-content");
+  loadingEl.classList.add("hidden");
+
+  if (error || !data) {
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  contentEl.classList.remove("hidden");
+  renderShareDashboard(data);
+}
+
+function renderShareDashboard(data) {
+  // These are the same globals the real dashboard's compute helpers
+  // (categoryTotal, entryValue, computeBudgetActual, etc.) read from — safe
+  // to populate here because a share visit never has a logged-in session
+  // of its own to collide with.
+  entriesCache = { income: [], expense: [], asset: [], liability: [] };
+  for (const row of (data.entries || [])) {
+    if (entriesCache[row.category]) entriesCache[row.category].push(row);
+  }
+  accountsCache = { bank: [], savings: [] };
+  for (const row of (data.accounts || [])) {
+    if (accountsCache[row.account_type]) accountsCache[row.account_type].push(row);
+  }
+  goalsCache = data.goals || [];
+  budgetsCache = data.budgets || [];
+  if (data.prime_rate) {
+    primeRate = Number(data.prime_rate.rate);
+    primeRateUpdatedAt = data.prime_rate.updated_at;
+  }
+
+  const totalIncomeNet = entriesCache.income.reduce((sum, e) => sum + incomeNetAmount(e), 0);
+  const totalExpense = categoryTotal("expense");
+  const diff = totalIncomeNet - totalExpense;
+  const predictedBank = accountsTotal("bank") + diff;
+
+  document.getElementById("share-summary-bank").textContent = money(predictedBank);
+  document.getElementById("share-summary-savings").textContent = money(accountsTotal("savings"));
+  document.getElementById("share-summary-diff").textContent = (diff >= 0 ? "+" : "") + money(diff);
+
+  document.getElementById("share-bubble-income").textContent = money(categoryTotal("income"));
+  document.getElementById("share-bubble-expense").textContent = money(categoryTotal("expense"));
+  document.getElementById("share-bubble-asset").textContent = money(categoryTotal("asset"));
+  document.getElementById("share-bubble-liability").textContent = money(categoryTotal("liability"));
+
+  // Goals — read-only rings, no update/delete actions.
+  const goalsGrid = document.getElementById("share-goals-grid");
+  const goalsEmpty = document.getElementById("share-goals-empty");
+  goalsGrid.innerHTML = "";
+  if (goalsCache.length === 0) {
+    goalsEmpty.classList.remove("hidden");
+  } else {
+    goalsEmpty.classList.add("hidden");
+    for (const g of goalsCache) {
+      const progressPct = Math.max(0, Math.min(100, (Number(g.current_amount) || 0) / (Number(g.target_amount) || 1) * 100));
+      const card = document.createElement("div");
+      card.className = "goal-card";
+      card.innerHTML = `
+        ${goalRingSvg(progressPct)}
+        <div class="goal-name">${escapeHtml(g.name)}</div>
+        <div class="goal-amounts">${money(g.current_amount)} of ${money(g.target_amount)}</div>
+      `;
+      goalsGrid.appendChild(card);
+    }
+  }
+
+  // Budgets — read-only bars, no delete action.
+  const budgetsList = document.getElementById("share-budgets-list");
+  const budgetsEmpty = document.getElementById("share-budgets-empty");
+  budgetsList.innerHTML = "";
+  if (budgetsCache.length === 0) {
+    budgetsEmpty.classList.remove("hidden");
+  } else {
+    budgetsEmpty.classList.add("hidden");
+    for (const b of budgetsCache) {
+      const actual = computeBudgetActual(b.tag);
+      const limit = Number(b.monthly_amount) || 0;
+      const pctUsed = Math.min(100, (actual / (limit || 1)) * 100);
+      const over = actual > limit;
+      const barColor = over ? "var(--expense)" : (pctUsed > 80 ? "var(--liability)" : "var(--income)");
+      const row = document.createElement("div");
+      row.className = "budget-row";
+      row.innerHTML = `
+        <div class="budget-row-top">
+          <span class="budget-tag">${escapeHtml(b.tag)}</span>
+          <span class="budget-figures ${over ? 'negative' : ''}">${money(actual)} of ${money(limit)}</span>
+        </div>
+        <div class="budget-bar-track"><div class="budget-bar-fill" style="width:${pctUsed}%;background:${barColor};"></div></div>
+      `;
+      budgetsList.appendChild(row);
+    }
+  }
+
+  // Entries — one read-only list per category, newest data first, no
+  // add/edit/delete controls and no receipt/simulator interactivity.
+  const container = document.getElementById("share-entries");
+  container.innerHTML = "";
+  const sections = [
+    { cat: "income", title: "Income" },
+    { cat: "expense", title: "Expenses" },
+    { cat: "asset", title: "Assets" },
+    { cat: "liability", title: "Liabilities" },
+  ];
+  for (const { cat, title } of sections) {
+    const entries = entriesCache[cat];
+    const section = document.createElement("div");
+    section.style.marginBottom = "20px";
+    const rowsHtml = entries.length === 0
+      ? `<div class="empty-state" style="padding:8px 0;">Nothing here.</div>`
+      : entries.map(entry => {
+          if (entry.category === "liability" && entry.is_loan) {
+            return `<div class="entry-row"><span class="desc">${escapeHtml(entry.description)}<span class="loan-badge">${LOAN_TYPE_LABELS[entry.loan_type] || "Loan"}</span>${tagChipsHtml(entry.tags)}</span><span class="right"><span class="amt">${money(getLoanComputedBalance(entry))}</span></span></div>`;
+          }
+          if (entry.category === "liability" && entry.is_credit_card) {
+            const due = entry.cc_due_day ? nextCcDueDate(entry) : null;
+            const dueText = due ? ccDueText(daysUntilDate(due), due) : "No due date set";
+            return `<div class="entry-row"><span class="desc">${escapeHtml(entry.description)}<span class="cc-badge">💳 Credit Card — ${escapeHtml(dueText)}</span>${tagChipsHtml(entry.tags)}</span><span class="right"><span class="amt">${money(Number(entry.amount) || 0)}</span></span></div>`;
+          }
+          return `<div class="entry-row"><span class="desc">${escapeHtml(entry.description)}${entry.is_recurring ? `<span class="recurring-badge">↻ Recurring</span>` : ""}${tagChipsHtml(entry.tags)}</span><span class="right"><span class="amt">${money(entryValue(entry))}</span></span></div>`;
+        }).join("");
+    section.innerHTML = `<h3>${title} — ${money(categoryTotal(cat))}</h3>${rowsHtml}`;
+    container.appendChild(section);
+  }
+}
+
 // ---------------- Init ----------------
 (async function init() {
+  if (isShareMode) {
+    await initShareView(shareToken);
+    return;
+  }
   // If the last login was "don't remember" and bb_alive isn't set, the
   // browser was actually closed and reopened since then (a same-tab
   // refresh would have kept bb_alive) — sign out before the session below

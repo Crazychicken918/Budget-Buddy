@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — Budget Buddy</title>
+<style>
+  :root {
+    --bg: #fbfbfe;
+    --card: #ffffff;
+    --border: #edecf5;
+    --text: #191a23;
+    --muted: #797e91;
+    --accent: #7c5cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px 20px; }
+  a { color: var(--accent); }
+  .back-link { display: inline-block; margin-bottom: 24px; font-size: 13.5px; text-decoration: none; color: var(--muted); }
+  .back-link:hover { color: var(--accent); }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .updated { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 17px; margin-top: 32px; margin-bottom: 8px; color: var(--accent); }
+  p, li { font-size: 14.5px; color: var(--text); }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 8px;
+  }
+  .placeholder {
+    background: #fef3de;
+    border: 1px solid #f5d99a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #8a6116;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">← Back to Budget Buddy</a>
+  <h1>Terms of Service</h1>
+  <div class="updated">Last updated: 9 September 2026</div>
+
+  <div class="card">
+    <p>These Terms of Service ("Terms") govern your use of Budget Buddy (the "app", "we", "our"), a personal
+    finance tracking and calculation tool. By creating an account or using the app, you agree to these Terms.
+    If you don't agree to them, please don't use the app. This is written in plain language rather than dense
+    legal boilerplate, because that's more useful to actually read — but it's still a real agreement between
+    you and us.</p>
+  </div>
+
+  <div class="placeholder">
+    <strong>Before publishing:</strong> this is drafted for a single developer running their own app for
+    personal or small-scale use, with South African law as the assumed governing law. If the app is ever
+    offered to the public at scale, it's worth having these Terms (and the Privacy Policy) reviewed by a
+    lawyer familiar with South African consumer protection and data-protection law.
+  </div>
+
+  <h2>1. What Budget Buddy Is</h2>
+  <p>Budget Buddy is a calculator and tracking tool. You enter your own income, expense, asset, liability,
+  loan, credit card, goal, and budget figures, and the app performs calculations on them — predicted balances,
+  loan amortisation, interest projections, NPV/IRR scenario comparisons, tax set-aside estimates, and similar.
+  All of these calculations are general-purpose arithmetic based entirely on the numbers you provide.</p>
+
+  <h2>2. Not Financial, Tax, or Legal Advice</h2>
+  <p>Budget Buddy is not a registered financial services provider, tax practitioner, or legal advisor, and
+  nothing in the app constitutes financial, investment, tax, or legal advice. The app does not analyse your
+  personal circumstances or recommend a course of action — it shows you the results of calculations based on
+  numbers you typed in. Figures such as loan payments, interest rates, projected balances, and tax set-aside
+  amounts are estimates for your own planning purposes only. Always confirm actual figures with your bank,
+  lender, or a qualified financial advisor, accountant, or tax practitioner before making financial decisions,
+  and consult a suitably qualified professional for advice specific to your situation.</p>
+
+  <h2>3. Your Account</h2>
+  <ul>
+    <li>You need an account (email and password) to use the app's core features. You're responsible for
+    keeping your login credentials secure and for all activity that happens under your account.</li>
+    <li>You must provide a real, working email address, since it's used for account verification and
+    password-reset emails.</li>
+    <li>You're responsible for the accuracy of the data you enter. The app's calculations are only as good as
+    the numbers you give it — we don't verify or audit anything you input.</li>
+    <li>You can stop using the app and request deletion of your account and data at any time (see the Privacy
+    Policy's "Data Retention &amp; Deletion" section).</li>
+  </ul>
+
+  <h2>4. Household Sharing Links</h2>
+  <p>The app lets you generate a read-only "share link" so someone else (e.g. a partner or family member) can
+  view a snapshot of your dashboard without logging in. Anyone who has that link can view your shared
+  financial data until you revoke it — treat a share link the same way you'd treat a password-reset link, and
+  only share it with people you trust. You are solely responsible for who you share these links with and for
+  revoking them when appropriate; we have no way of knowing who a link has been shared with beyond you.</p>
+
+  <h2>5. Acceptable Use</h2>
+  <p>You agree not to:</p>
+  <ul>
+    <li>Use the app for any unlawful purpose, or to store or process data you don't have the right to store;</li>
+    <li>Attempt to gain unauthorised access to another user's account or data, or to circumvent the app's
+    access controls (including by sharing a household link beyond its intended recipient in a way that
+    exposes someone else's data without their consent);</li>
+    <li>Attempt to interfere with, disrupt, or overload the app's infrastructure or that of our hosting
+    providers (Supabase and Vercel);</li>
+    <li>Use automated means to scrape, extract, or bulk-download data from the app beyond your own normal use
+    of it (e.g. the built-in CSV export, which is fine).</li>
+  </ul>
+
+  <h2>6. No Warranty</h2>
+  <p>Budget Buddy is provided "as is" and "as available", without warranties of any kind, whether express or
+  implied, including (without limitation) any warranty that the app will be error-free, uninterrupted, secure,
+  or that calculations will be accurate for every possible input or edge case. This is a personal/small-scale
+  project, not an enterprise financial product — treat it as a helpful tool, and double-check any figure that
+  matters before relying on it for a real financial decision.</p>
+
+  <h2>7. Limitation of Liability</h2>
+  <p>To the maximum extent permitted by law, we are not liable for any indirect, incidental, special, or
+  consequential loss or damage arising from your use of (or inability to use) the app, including but not
+  limited to financial loss resulting from decisions made using figures calculated by the app, or from data
+  loss, downtime, or inaccuracies in the app. Nothing in these Terms excludes or limits liability that cannot
+  lawfully be excluded or limited under South African law (for example, liability for gross negligence or
+  wilful misconduct).</p>
+
+  <h2>8. Service Availability &amp; Changes</h2>
+  <p>The app is hosted on third-party infrastructure (Vercel for hosting, Supabase for the database and
+  authentication) and its availability depends on those services. We may modify, suspend, or discontinue any
+  part of the app at any time, and we'll make reasonable efforts to let you know of any change that
+  meaningfully affects your access to your own data. Features described elsewhere in the app (loan tracking,
+  scenario comparisons, budgets, goals, credit card reminders, household sharing, and so on) may be added,
+  changed, or removed over time as the app evolves.</p>
+
+  <h2>9. Termination</h2>
+  <p>You may stop using the app and close your account at any time. We may suspend or terminate access to the
+  app for any account we reasonably believe is being used in violation of these Terms (see Section 5), or if
+  required to do so by law. Where practical, we'll try to give notice first.</p>
+
+  <h2>10. Governing Law</h2>
+  <p>These Terms are governed by the laws of South Africa, and any dispute arising from them will be subject
+  to the jurisdiction of the South African courts.</p>
+
+  <h2>11. Changes to These Terms</h2>
+  <p>If these Terms change, the "Last updated" date at the top of this page will change accordingly. Continued
+  use of the app after an update means you accept the revised Terms. For significant changes, we'll make
+  reasonable efforts to let you know (for example, via a notice in the app).</p>
+
+  <h2>12. Contact Us</h2>
+  <div class="placeholder">
+    [Your name / business name]<br>
+    [Your contact email]<br>
+    Johannesburg, South Africa
+  </div>
+
+  <h2>13. Related Documents</h2>
+  <p>See also our <a href="privacy.html">Privacy Policy</a>, which explains what information the app collects
+  and how it's used.</p>
+</div>
+</body>
+</html>
